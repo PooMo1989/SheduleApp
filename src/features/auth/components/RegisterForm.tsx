@@ -92,10 +92,34 @@ export function RegisterForm() {
                 await new Promise(resolve => setTimeout(resolve, 500));
                 router.push('/dashboard');
             } else {
-                // If session is still missing, it means Supabase config requires verification
-                // We respect this state now.
-                setError('Registration successful! Please check your email to verify your account.');
-                setIsLoading(false);
+                // Session missing.
+                // Scenario A: Verification Required -> User is not confirmed.
+                // Scenario B: Verification Disabled -> User IS confirmed, but signUp didn't return session (authentication quirk).
+
+                // standard fallback: Try to login immediately.
+                // If it works, Scenario B was true.
+                // If it fails, Scenario A is true (User needs to check email).
+                try {
+                    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+                        email: data.email,
+                        password: data.password,
+                    });
+
+                    if (signInData.session) {
+                        // Success! Redirect.
+                        router.refresh();
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        router.push('/dashboard');
+                    } else {
+                        // Login failed, so verification is definitely required.
+                        setError('Registration successful! Please check your email to verify your account.');
+                        setIsLoading(false);
+                    }
+                } catch (loginErr) {
+                    // Login errored imply verification needed
+                    setError('Registration successful! Please check your email to verify your account.');
+                    setIsLoading(false);
+                }
             }
 
         } catch (err) {
