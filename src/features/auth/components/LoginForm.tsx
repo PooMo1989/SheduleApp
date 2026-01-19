@@ -93,7 +93,7 @@ export function LoginForm() {
                 <input
                     type="email"
                     {...register('email')}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-neutral-900"
                     autoComplete="email"
                     placeholder="you@example.com"
                 />
@@ -117,7 +117,7 @@ export function LoginForm() {
                 <input
                     type="password"
                     {...register('password')}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-neutral-900"
                     autoComplete="current-password"
                     placeholder="••••••••"
                 />

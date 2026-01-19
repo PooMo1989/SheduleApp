@@ -1,3 +1,5 @@
+import { LogoutButton } from '@/components/common/LogoutButton';
+
 export default function DashboardPage() {
     return (
         <div className="min-h-screen bg-neutral-50">
@@ -6,7 +8,10 @@ export default function DashboardPage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex justify-between items-center">
                         <h1 className="text-2xl font-bold text-primary-600">sheduleApp</h1>
-                        <span className="text-sm text-neutral-600">Dashboard</span>
+                        <div className="flex items-center gap-4">
+                            <span className="text-sm text-neutral-600">Dashboard</span>
+                            <LogoutButton />
+                        </div>
                     </div>
                 </div>
             </header>

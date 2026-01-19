@@ -80,7 +80,7 @@ export function RegisterForm() {
                     id="fullName"
                     type="text"
                     {...register('fullName')}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-neutral-900"
                     placeholder="John Doe"
                 />
                 {errors.fullName && (
@@ -97,7 +97,7 @@ export function RegisterForm() {
                     id="email"
                     type="email"
                     {...register('email')}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-neutral-900"
                     placeholder="you@example.com"
                 />
                 {errors.email && (
@@ -114,7 +114,7 @@ export function RegisterForm() {
                     id="phone"
                     type="tel"
                     {...register('phone')}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-neutral-900"
                     placeholder="+94 77 123 4567"
                 />
                 {errors.phone && (
@@ -131,7 +131,7 @@ export function RegisterForm() {
                     id="password"
                     type="password"
                     {...register('password')}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-neutral-900"
                     placeholder="••••••••"
                 />
                 {errors.password && (
@@ -148,7 +148,7 @@ export function RegisterForm() {
                     id="confirmPassword"
                     type="password"
                     {...register('confirmPassword')}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-neutral-900"
                     placeholder="••••••••"
                 />
                 {errors.confirmPassword && (
