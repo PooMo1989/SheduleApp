@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 /**
  * Toast notification for access denied redirects
@@ -9,17 +9,22 @@ import { useEffect, useState } from 'react';
  */
 export function AccessDeniedToast() {
     const searchParams = useSearchParams();
-    const [show, setShow] = useState(false);
+    const [dismissed, setDismissed] = useState(false);
 
-    useEffect(() => {
-        if (searchParams.get('error') === 'access_denied') {
-            setShow(true);
-            const timer = setTimeout(() => setShow(false), 5000);
-            return () => clearTimeout(timer);
-        }
+    // Check if access was denied - derived state, not effect
+    const hasError = useMemo(() => {
+        return searchParams.get('error') === 'access_denied';
     }, [searchParams]);
 
-    if (!show) return null;
+    // Auto-dismiss after 5 seconds
+    useEffect(() => {
+        if (hasError && !dismissed) {
+            const timer = setTimeout(() => setDismissed(true), 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [hasError, dismissed]);
+
+    if (!hasError || dismissed) return null;
 
     return (
         <div className="fixed top-4 right-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg shadow-lg z-50 animate-in slide-in-from-top-2">
@@ -29,7 +34,7 @@ export function AccessDeniedToast() {
                 </svg>
                 <div>
                     <p className="font-medium">Access Denied</p>
-                    <p className="text-sm">You don't have permission to access that page.</p>
+                    <p className="text-sm">You do not have permission to access that page.</p>
                 </div>
             </div>
         </div>
