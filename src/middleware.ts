@@ -12,8 +12,7 @@ const publicRoutes = [
     '/forgot-password',
     '/reset-password',
     '/auth/callback',
-    '/api/trpc/health',
-    '/api/trpc/dbHealth',
+    '/api',  // All API routes - tRPC handles its own auth via protected procedures
 ];
 
 /**
