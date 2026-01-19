@@ -5,21 +5,26 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { registerFormSchema, type RegisterFormInput } from '../schemas/register';
-import { trpc } from '@/lib/trpc/client';
+import { createClient } from '@/lib/supabase/client';
+
+// Default tenant ID for MVP
+const DEFAULT_TENANT_ID = 'a0000000-0000-0000-0000-000000000001';
 
 /**
  * Registration Form Component
  * Handles user registration with email, phone, and password
+ * Uses client-side Supabase auth for automatic session creation
  */
 export function RegisterForm() {
     const router = useRouter();
+    const supabase = createClient();
     const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     const {
         register,
         handleSubmit,
-        formState: { errors, isSubmitting },
+        formState: { errors },
     } = useForm<RegisterFormInput>({
         resolver: zodResolver(registerFormSchema),
         defaultValues: {
@@ -31,28 +36,66 @@ export function RegisterForm() {
         },
     });
 
-    const registerMutation = trpc.auth.register.useMutation({
-        onSuccess: (data) => {
-            setSuccess(data.message);
-            // Redirect to dashboard after a short delay to show success message
-            setTimeout(() => {
-                router.push('/dashboard');
-            }, 2000);
-        },
-        onError: (err) => {
-            setError(err.message);
-        },
-    });
-
-    const onSubmit = (data: RegisterFormInput) => {
+    const onSubmit = async (data: RegisterFormInput) => {
         setError(null);
-        setSuccess(null);
-        registerMutation.mutate({
-            email: data.email,
-            phone: data.phone,
-            password: data.password,
-            fullName: data.fullName,
-        });
+        setIsLoading(true);
+
+        try {
+            // 1. Create auth user using client-side Supabase (establishes session)
+            const { data: authData, error: authError } = await supabase.auth.signUp({
+                email: data.email,
+                password: data.password,
+                options: {
+                    data: {
+                        full_name: data.fullName,
+                        phone: data.phone,
+                    },
+                },
+            });
+
+            if (authError) {
+                if (authError.message.includes('already registered') ||
+                    authError.message.includes('already exists')) {
+                    setError('Email already registered. Please login instead.');
+                } else {
+                    setError(authError.message);
+                }
+                return;
+            }
+
+            if (!authData.user) {
+                setError('Failed to create account. Please try again.');
+                return;
+            }
+
+            // 2. Create user profile in users table
+            const { error: profileError } = await supabase
+                .from('users')
+                .insert({
+                    id: authData.user.id,
+                    tenant_id: DEFAULT_TENANT_ID,
+                    role: 'client',
+                    full_name: data.fullName || null,
+                    phone: data.phone,
+                });
+
+            if (profileError) {
+                console.error('Profile creation failed:', profileError);
+                // User is already logged in, but profile creation failed
+                // We'll still redirect to dashboard - profile can be recreated later
+            }
+
+            // 3. Session is automatically created by signUp when email confirmation is disabled
+            // Redirect immediately to dashboard
+            router.push('/dashboard');
+            router.refresh();
+
+        } catch (err) {
+            console.error('Registration error:', err);
+            setError('An unexpected error occurred. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -61,13 +104,6 @@ export function RegisterForm() {
             {error && (
                 <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-sm">
                     {error}
-                </div>
-            )}
-
-            {/* Success Message */}
-            {success && (
-                <div className="p-3 bg-green-50 border border-green-200 text-green-600 rounded-md text-sm">
-                    {success}
                 </div>
             )}
 
@@ -159,10 +195,10 @@ export function RegisterForm() {
             {/* Submit Button */}
             <button
                 type="submit"
-                disabled={isSubmitting || registerMutation.isPending}
+                disabled={isLoading}
                 className="w-full py-2.5 px-4 bg-primary-600 text-white font-medium rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-                {isSubmitting || registerMutation.isPending ? 'Creating Account...' : 'Create Account'}
+                {isLoading ? 'Creating Account...' : 'Create Account'}
             </button>
 
             {/* Login Link */}
