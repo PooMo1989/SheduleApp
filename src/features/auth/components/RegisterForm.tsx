@@ -92,29 +92,10 @@ export function RegisterForm() {
                 await new Promise(resolve => setTimeout(resolve, 500));
                 router.push('/dashboard');
             } else {
-                // Session missing (Server wants verification)
-                // BUT we have a DB trigger to auto-confirm. So let's force login!
-                try {
-                    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-                        email: data.email,
-                        password: data.password,
-                    });
-
-                    if (signInError) throw signInError;
-
-                    if (signInData.session) {
-                        router.refresh();
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                        router.push('/dashboard');
-                    } else {
-                        // Should not happen with trigger
-                        setError('Account created but login failed. Please check your email.');
-                    }
-                } catch (loginErr) {
-                    console.error('Auto-login failed:', loginErr);
-                    // Fallback to message
-                    setError('Account created! Please check your email to verify your account.');
-                }
+                // If session is still missing, it means Supabase config requires verification
+                // We respect this state now.
+                setError('Registration successful! Please check your email to verify your account.');
+                setIsLoading(false);
             }
 
         } catch (err) {
