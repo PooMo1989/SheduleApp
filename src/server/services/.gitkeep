@@ -1,0 +1,10 @@
+/**
+ * Business Logic Services
+ * 
+ * This directory will contain server-side business logic services:
+ * - availability.ts - 4-layer availability engine
+ * - calendar-sync.ts - Google Calendar polling
+ * - notifications.ts - Email + SMS
+ * 
+ * To be implemented in Epic 2+.
+ */

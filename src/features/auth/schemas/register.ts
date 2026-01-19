@@ -1,0 +1,26 @@
+import { z } from 'zod';
+
+/**
+ * Registration form validation schema
+ * Used for both client-side and server-side validation
+ */
+export const registerSchema = z.object({
+    email: z.string().email('Invalid email address'),
+    phone: z.string().min(10, 'Phone number must be at least 10 digits'),
+    password: z.string().min(8, 'Password must be at least 8 characters'),
+    fullName: z.string().min(2, 'Name must be at least 2 characters').optional(),
+});
+
+export type RegisterInput = z.infer<typeof registerSchema>;
+
+/**
+ * Client-side registration form schema with confirm password
+ */
+export const registerFormSchema = registerSchema.extend({
+    confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+});
+
+export type RegisterFormInput = z.infer<typeof registerFormSchema>;
