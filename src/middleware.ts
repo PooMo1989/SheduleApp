@@ -35,13 +35,7 @@ function isPublicRoute(pathname: string): boolean {
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    // Allow public routes without auth check
-    if (isPublicRoute(pathname)) {
-        return await updateSession(request);
-    }
-
-    // For protected routes, check authentication
-    const response = NextResponse.next({ request });
+    let response = NextResponse.next({ request });
 
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -55,6 +49,7 @@ export async function middleware(request: NextRequest) {
                     cookiesToSet.forEach(({ name, value }) =>
                         request.cookies.set(name, value)
                     );
+                    response = NextResponse.next({ request });
                     cookiesToSet.forEach(({ name, value, options }) =>
                         response.cookies.set(name, value, options)
                     );
@@ -65,14 +60,36 @@ export async function middleware(request: NextRequest) {
 
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Redirect to login if not authenticated
-    if (!user) {
+    // 1. Redirect to login if not authenticated AND accessing a protected route
+    if (!user && !isPublicRoute(pathname)) {
         const loginUrl = new URL('/login', request.url);
         loginUrl.searchParams.set('redirect', pathname);
         return NextResponse.redirect(loginUrl);
     }
 
-    // Get user role from database for role-based routing
+    // 2. Redirect to dashboard if authenticated AND accessing login/register
+    if (user && ['/login', '/register', '/forgot-password', '/reset-password'].includes(pathname)) {
+        // Fetch role to determine correct dashboard
+        const { data: userData } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+
+        const role = userData?.role || 'client';
+        if (role === 'admin') return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+        if (role === 'provider') return NextResponse.redirect(new URL('/provider/dashboard', request.url));
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+
+    // 3. Allow public routes (if not redirected above)
+    if (isPublicRoute(pathname)) {
+        return await updateSession(request);
+    }
+
+    // 4. Role-based checks for protected routes
+    if (!user) return await updateSession(request);
+
     const { data: userData } = await supabase
         .from('users')
         .select('role')
@@ -81,7 +98,6 @@ export async function middleware(request: NextRequest) {
 
     const role = userData?.role || 'client';
 
-    // Role-based route protection
     if (pathname.startsWith('/admin') && role !== 'admin') {
         return NextResponse.redirect(new URL('/dashboard?error=access_denied', request.url));
     }

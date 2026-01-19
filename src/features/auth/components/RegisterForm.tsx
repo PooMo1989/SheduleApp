@@ -85,10 +85,11 @@ export function RegisterForm() {
                 // We'll still redirect to dashboard - profile can be recreated later
             }
 
-            // 3. Session is automatically created by signUp when email confirmation is disabled
-            // Redirect immediately to dashboard
-            router.push('/dashboard');
+            // 3. User is signed in. Ensure cookies are set and UI is updated.
             router.refresh();
+            // Small delay to ensure cookies are propagated to next request
+            await new Promise(resolve => setTimeout(resolve, 500));
+            router.push('/dashboard');
 
         } catch (err) {
             console.error('Registration error:', err);
