@@ -2,11 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock createEnv before importing
 vi.mock('@t3-oss/env-nextjs', () => ({
-    createEnv: vi.fn((config) => {
-        // Return a mock that validates using the provided schema
-        const _serverSchema = config.server || {};
-        const _clientSchema = config.client || {};
-
+    createEnv: vi.fn(() => {
         return {
             NODE_ENV: process.env.NODE_ENV || 'test',
             NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,

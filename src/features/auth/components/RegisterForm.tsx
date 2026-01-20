@@ -100,7 +100,7 @@ export function RegisterForm() {
                 // If it works, Scenario B was true.
                 // If it fails, Scenario A is true (User needs to check email).
                 try {
-                    const { data: signInData, error: _signInError } = await supabase.auth.signInWithPassword({
+                    const { data: signInData } = await supabase.auth.signInWithPassword({
                         email: data.email,
                         password: data.password,
                     });
@@ -115,7 +115,7 @@ export function RegisterForm() {
                         setError('Registration successful! Please check your email to verify your account.');
                         setIsLoading(false);
                     }
-                } catch (_loginErr) {
+                } catch {
                     // Login errored imply verification needed
                     setError('Registration successful! Please check your email to verify your account.');
                     setIsLoading(false);
