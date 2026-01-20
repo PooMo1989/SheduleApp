@@ -902,7 +902,29 @@ So that **I can book an appointment without a separate registration step** (FR10
 **When** a new client books
 **Then** password fields are optional
 **And** "Book as Guest" option appears
-**And** guest can "claim" their bookings by registering later
+    **And** guest can "claim" their bookings by registering later
+    
+    ---
+
+    ### Story 3.7: Hybrid Auth Infrastructure & Inline Auto-Confirm
+
+    As a **system admin**,
+    I want **clients registering via the booking widget to be automatically verified**,
+    So that **they experience no friction, even though global email verification is enabled for security**.
+
+    **Acceptance Criteria:**
+
+    **Given** "Confirm Email" is enabled globally in Supabase (Story 2.2 prerequisite)
+    **When** a client registers through the "Inline Booking" flow (Story 3.6)
+    **Then** the backend (via Server Action/TrPC) automatically sets `email_confirmed_at` to `now()` using the Service Role key
+    **And** the client is logged in immediately without needing to check email
+    
+    **Given** a user registers via the /register page (Public) or /admin/invite (Private)
+    **When** they sign up
+    **Then** they are **NOT** auto-confirmed (Standard strict flow applies)
+    **And** they must verify email or accept invite to login
+
+    ---
 
 ---
 
