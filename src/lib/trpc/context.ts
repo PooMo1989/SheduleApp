@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
-import type { User } from '@supabase/supabase-js';
+import type { User, SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/database.types';
 
 /**
  * tRPC Context
@@ -8,6 +9,7 @@ import type { User } from '@supabase/supabase-js';
  * Passed to all tRPC procedures.
  */
 export interface Context {
+    supabase: SupabaseClient<Database>;
     user: User | null;
     userId: string | null;
     tenantId: string | null;
@@ -22,7 +24,7 @@ export async function createContext(): Promise<Context> {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-        return { user: null, userId: null, tenantId: null, role: null };
+        return { supabase, user: null, userId: null, tenantId: null, role: null };
     }
 
     // Get user profile with tenant and role
@@ -33,6 +35,7 @@ export async function createContext(): Promise<Context> {
         .single();
 
     return {
+        supabase,
         user,
         userId: user.id,
         tenantId: profile?.tenant_id || null,
@@ -42,3 +45,4 @@ export async function createContext(): Promise<Context> {
 
 // Legacy export for compatibility
 export type TRPCContext = Context;
+

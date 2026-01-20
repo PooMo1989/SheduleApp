@@ -39,11 +39,11 @@ This document provides the complete epic and story breakdown for sheduleApp, dec
 - FR9: Client can see remaining capacity for Group Classes
 
 **Client Registration & Authentication (FR10-FR15)**
-- FR10: All clients must register to book (no guest booking)
-- FR11: Client can register with Email + Mobile + Password
+- FR10: Clients can book as guest (name, email, phone) with optional account creation
+- FR11: Client can optionally set password to create full account
 - FR12: Client can register via Social Login (SSO - Google)
-- FR13: Client can defer email verification until second booking
-- FR14: Client can log in with existing credentials
+- FR13: Guest clients receive magic links in emails to manage their bookings
+- FR14: Client can log in with existing credentials (if account created)
 - FR15: Client can reset password via email
 
 **Booking Management (FR16-FR21)**
@@ -329,6 +329,30 @@ This document provides the complete epic and story breakdown for sheduleApp, dec
 
 **Note:** Implement as paid feature after Phase 2 is stable.
 
+---
+
+### Phase 4: SaaS Payment Architecture (Research Required)
+**Goal:** Enable multi-tenant payment collection and distribution for SaaS model.
+
+**Key Questions to Resolve:**
+1. **Centralized Model:** All payments → Platform's PayHere account → Distribute to tenants (simpler, more regulatory burden)
+2. **Per-Tenant Model:** Each tenant connects their own PayHere Merchant ID → Direct payments (complex onboarding, less liability)
+
+**Technical Considerations:**
+- PayHere uses Merchant ID + Merchant Secret per integration
+- Per-tenant approach: Store `payhere_merchant_id` and `payhere_merchant_secret` (encrypted) in `tenants` table
+- Centralized approach: Build internal ledger + payout system
+- Neither approach requires white-label/subdomain - works with embed widget model
+- Sri Lanka doesn't have Stripe Connect; PayHere has no native split-payment feature
+
+**Research Needed:**
+- Contact PayHere about platform/marketplace support
+- Evaluate Paddle/Lemon Squeezy as Merchant of Record alternatives
+- Review compliance/regulatory requirements for holding tenant funds
+
+**Note:** Defer until after Epic 10 (basic PayHere integration) is complete. Epic 10 can use centralized model for initial implementation.
+
+---
 
 # Epic Stories
 
@@ -576,7 +600,7 @@ So that **we can access the live app and share progress**.
 
 ## Epic 2: Admin Service & Provider Management
 
-### Story 2.0: Admin Company Profile Setup
+### Story 2.0: Admin Company Profile Setup ✅ DONE
 
 As a **tenant admin**,
 I want **to set up my company profile and branding**,
@@ -601,7 +625,7 @@ So that **my booking page reflects my business identity** (FR58, FR59).
 
 ---
 
-### Story 2.1: Services & Providers Database Schema
+### Story 2.1: Services & Providers Database Schema ✅ DONE
 
 As a **developer**,
 I want **database tables for services, providers, and their relationships**,
@@ -620,7 +644,7 @@ So that **I can store and query service/provider data**.
 
 ---
 
-### Story 2.2: Provider Availability Schema
+### Story 2.2: Provider Availability Schema ✅ DONE
 
 As a **developer**,
 I want **database tables for provider schedules and overrides**,
@@ -638,7 +662,7 @@ So that **I can store availability configuration**.
 
 ---
 
-### Story 2.3: Admin Service CRUD
+### Story 2.3: Admin Service CRUD ✅ DONE
 
 As an **admin**,
 I want **to create, edit, and delete services**,
@@ -665,7 +689,7 @@ So that **I can manage the service catalog** (FR43-FR44).
 
 ---
 
-### Story 2.4: Team Invitations & Member Management
+### Story 2.4: Team Invitations & Member Management ✅ DONE
 
 As an **admin**,
 I want **to invite team members by email**,
@@ -690,7 +714,7 @@ So that **they can create their own accounts and join the company** (FR60).
 
 ---
 
-### Story 2.5: Role Assignment & Provider Linking
+### Story 2.5: Role Assignment & Provider Linking ✅ DONE
 
 As an **admin**,
 I want **to assign roles (Provider/Admin) to team members**,
@@ -892,76 +916,121 @@ So that **I know my booking was successful**.
 **When** the confirmation screen displays
 **Then** I see a success animation (check mark)
 **And** I see booking details (service, provider, date, time)
-**And** I see "Awaiting Admin Approval" status
+**And** I see "Awaiting Admin Approval" status (for Pay Later)
 **And** I see "You will receive an email once confirmed"
+
+**Given** I booked as a guest (no password set)
+**When** the confirmation screen displays
+**Then** I see a prominent "Create Account" section
+**And** the section says: "Want to easily track and manage your bookings?"
+**And** I see fields: Password, Confirm Password
+**And** I see "Create Account" button
+**And** I see "Skip for now" link (dismisses the prompt)
+
+**Given** I booked as a guest and set a password on confirmation
+**When** I click "Create Account"
+**Then** my account is upgraded with password
+**And** I am logged in automatically
+**And** I see "Account created! You can now manage all your bookings"
 
 **Given** I am on the confirmation screen
 **When** I click "View My Bookings"
-**Then** I am redirected to my bookings dashboard
+**Then** I am redirected to my bookings dashboard (if logged in)
+**Or** I see a prompt to check my email for booking management link (if guest)
 
 ---
 
-### Story 3.6: Inline Registration During Booking
+### Story 3.6: Guest Booking Flow (Lazy Registration)
 
-As a **new client who hasn't registered yet**,
-I want **to create my account as part of the booking process**,
-So that **I can book an appointment without a separate registration step** (FR10, FR11, FR13).
+As a **new client**,
+I want **to book an appointment without creating an account upfront**,
+So that **I can complete my booking quickly without friction** (FR10, FR13).
 
 **Acceptance Criteria:**
 
 **Given** I am NOT logged in and have selected a time slot
 **When** I click "Book this slot"
-**Then** I see a combined registration + booking confirmation page
+**Then** I see a simple booking details form
 **And** the page shows my selected service, provider, date/time at the top
-**And** I see registration fields: Name, Phone, Email, Password, Confirm Password
-**And** I see "Continue with Google" as an alternative
+**And** I see required fields: Name, Phone, Email
+**And** I see "Continue with Google" as an alternative (creates full account)
 **And** I see "Proceed to Payment" CTA button
 
-**Given** I am filling out the inline registration form
+**Given** I am filling out the booking form
 **When** I selected a slot
 **Then** the slot is temporarily held for 10 minutes
 **And** a countdown timer is visible showing remaining hold time
 **And** other users see this slot as unavailable
 
-**Given** I enter an email that already exists
+**Given** I enter an email that already exists in the system
 **When** I blur the email field
-**Then** I see message: "This email is already registered"
-**And** I see link: "Already have an account? Sign in"
+**Then** I see message: "We found your account!"
+**And** I see options: "Sign in to book" or "Continue as guest"
+**And** if I continue as guest, booking is linked to existing client record
 
-**Given** I filled all fields correctly
+**Given** I filled all required fields (Name, Phone, Email)
 **When** I click "Proceed to Payment"
-**Then** user account created with `email_verified: false`
-**And** user automatically logged in (session created)
+**Then** client record created with `password_hash: null` (guest)
+**And** `booking_token` generated (unique, secure, expiring in 30 days)
 **And** temporary slot hold converted to pending booking
-**And** redirected to payment page
-
-**Given** the tenant has `allow_guest_checkout: true` in settings
-**When** a new client books
-**Then** password fields are optional
-**And** "Book as Guest" option appears
-    **And** guest can "claim" their bookings by registering later
+**And** redirected to payment page (or confirmation for Pay Later)
     
-    ---
+---
 
-    ### Story 3.7: Hybrid Auth Infrastructure & Inline Auto-Confirm
+### Story 3.7: Guest Magic Link & Account Claim
 
-    As a **system admin**,
-    I want **clients registering via the booking widget to be automatically verified**,
-    So that **they experience no friction, even though global email verification is enabled for security**.
+As a **guest client**,
+I want **to access and manage my bookings via a secure link**,
+So that **I can reschedule or cancel without needing an account** (FR13).
 
-    **Acceptance Criteria:**
+**Acceptance Criteria:**
 
-    **Given** "Confirm Email" is enabled globally in Supabase (Story 2.2 prerequisite)
-    **When** a client registers through the "Inline Booking" flow (Story 3.6)
-    **Then** the backend (via Server Action/TrPC) automatically sets `email_confirmed_at` to `now()` using the Service Role key
-    **And** the client is logged in immediately without needing to check email
-    
-    **Given** a user registers via the /register page (Public) or /admin/invite (Private)
-    **When** they sign up
-    **Then** they are **NOT** auto-confirmed (Standard strict flow applies)
-    **And** they must verify email or accept invite to login
+**Given** I booked as a guest
+**When** I receive my confirmation email
+**Then** the email contains a unique "Manage Booking" link
+**And** the link format is `/booking/manage?token={booking_token}`
+**And** the token expires after 30 days (but refreshes on each booking)
+**And** clicking the link shows my booking(s) for that email
 
-    ---
+**Given** I click the magic link from my email
+**When** the page loads
+**Then** I see all my bookings (for this email address)
+**And** I can reschedule individual bookings (if policy allows)
+**And** I can cancel bookings (if policy allows)
+**And** I see a prominent "Create Account" banner at the top
+
+**Given** the magic link token has expired (30+ days)
+**When** I click the link
+**Then** I see "Link expired. Enter your email to get a new link"
+**And** I can request a new magic link via email
+
+**Given** I am on the guest booking management page
+**When** I click "Create Account"
+**Then** I see password fields (Password, Confirm Password)
+**And** I can set a password to activate my account
+**And** all my past bookings are linked to my new account
+
+---
+
+### Story 3.8: Admin/Provider Strict Authentication
+
+As a **system admin**,
+I want **admins and providers to have strict account verification**,
+So that **business-side accounts are secure** (FR55).
+
+**Acceptance Criteria:**
+
+**Given** "Confirm Email" is enabled globally in Supabase
+**When** a user registers via /admin/invite (team invitation)
+**Then** they must verify email to activate account
+**And** they must set a strong password (8+ chars, mixed case)
+
+**Given** a user signs up via Google SSO for Admin/Provider role
+**When** they complete OAuth
+**Then** they are automatically verified (Google email trusted)
+**And** they are assigned their invited role
+
+**Note:** Guest clients (Story 3.6) bypass email verification since they don't have passwords - security is via magic link tokens instead.
 
 ---
 
@@ -1241,10 +1310,22 @@ So that **I have a record of my appointment** (FR33).
 
 **Acceptance Criteria:**
 
-**Given** my booking is APPROVED
-**When** the approval is processed
+**Given** my booking is APPROVED (or Pay Later is confirmed)
+**When** the confirmation email is sent
 **Then** I receive email with: service, provider, date/time, location
 **And** email includes calendar attachment (.ics)
+
+**Given** I am a guest client (no password set)
+**When** I receive the confirmation email
+**Then** the email includes a "Manage Booking" button with magic link
+**And** the email includes a section: "Create an account to easily manage all your bookings"
+**And** there is a "Create Account" button linking to account activation page
+**And** the magic link token is valid for 30 days
+
+**Given** I am a registered client (has password)
+**When** I receive the confirmation email
+**Then** the email includes a "View My Bookings" button linking to dashboard
+**And** no account creation prompt is shown
 
 ---
 

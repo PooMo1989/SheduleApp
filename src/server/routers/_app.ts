@@ -1,19 +1,37 @@
 import { router, publicProcedure } from '@/lib/trpc/server';
 import { createClient } from '@/lib/supabase/server';
 import { authRouter } from './auth';
+import { adminRouter } from './admin';
+import { serviceRouter, categoryRouter } from './service';
+import { teamRouter } from './team';
+import { providerRouter } from './provider';
 
 /**
  * Root tRPC Router for sheduleApp
  * 
  * All routers are merged here. Add new routers as features are implemented:
  * - booking (Epic 3)
- * - service (Epic 2)
- * - provider (Epic 2)
- * - admin (Epic 2)
+ * - service (Epic 2) ✅
+ * - provider (Epic 2) ✅
+ * - admin (Epic 2) ✅
+ * - team (Epic 2) ✅
  */
 export const appRouter = router({
     // Auth router for registration, login, etc.
     auth: authRouter,
+
+    // Admin router for tenant settings (Story 2.0)
+    admin: adminRouter,
+
+    // Service router for service CRUD (Story 2.3)
+    service: serviceRouter,
+    category: categoryRouter,
+
+    // Team router for invitations (Story 2.4)
+    team: teamRouter,
+
+    // Provider router for profile editing (Story 2.5)
+    provider: providerRouter,
 
     /**
      * Health check endpoint
