@@ -293,6 +293,43 @@ This document provides the complete epic and story breakdown for sheduleApp, dec
 
 **Note:** Deferred to Phase 2 to reduce MVP complexity. Covers FR18, FR27.
 
+---
+
+### Phase 2: Subdomain-Based Multi-Tenancy (Deferred)
+**Goal:** Each company gets a branded subdomain for their booking portal.
+
+**Implementation:**
+- Route pattern: `companyA.sheduleapp.com`, `companyB.sheduleapp.com`
+- Middleware reads subdomain and resolves tenant
+- Single wildcard SSL certificate (`*.sheduleapp.com`)
+- Tenant lookup via `slug` column in `tenants` table
+
+**User Outcome:** Companies have a semi-branded URL without custom domain complexity.
+
+**Note:** Implement after MVP when onboarding multiple tenants.
+
+---
+
+### Phase 3: Custom Domain Support (Deferred)
+**Goal:** Paid tier customers can use their own domain for full white-label experience.
+
+**Implementation:**
+- Companies configure: `booking.theircompany.com` → CNAME to Vercel
+- Add `custom_domain` column to `tenants` table
+- Middleware resolves tenant by hostname
+- Vercel handles SSL automatically per domain
+- OAuth redirect flows through central auth domain (`auth.sheduleapp.com`)
+
+**User Outcome:** True white-label experience where clients only see the company's brand.
+
+**Technical Considerations:**
+- OAuth requires central redirect URI (keep auth on main domain)
+- DNS verification flow for custom domains
+- Vercel domain configuration via API or dashboard
+
+**Note:** Implement as paid feature after Phase 2 is stable.
+
+
 # Epic Stories
 
 ## Epic 1: Project Foundation & Infrastructure
