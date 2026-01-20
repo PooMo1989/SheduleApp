@@ -1,5 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { TRPCError } from '@trpc/server';
+import { describe, it, expect } from 'vitest';
 
 // Test the procedure middleware logic directly
 describe('tRPC Procedure Authorization', () => {
@@ -16,7 +15,7 @@ describe('tRPC Procedure Authorization', () => {
                 user: { id: 'user-123', email: 'test@example.com' },
                 userId: 'user-123',
                 tenantId: 'tenant-123',
-                role: 'client' as const,
+                role: 'client' as 'admin' | 'provider' | 'client',
             };
 
             const isAuthorized = ctx.user && ctx.userId;
@@ -30,7 +29,7 @@ describe('tRPC Procedure Authorization', () => {
                 user: { id: 'user-123', email: 'test@example.com' },
                 userId: 'user-123',
                 tenantId: 'tenant-123',
-                role: 'client' as const,
+                role: 'client' as 'admin' | 'provider' | 'client',
             };
 
             const isAdmin = ctx.role === 'admin';
@@ -42,7 +41,7 @@ describe('tRPC Procedure Authorization', () => {
                 user: { id: 'user-123', email: 'admin@example.com' },
                 userId: 'user-123',
                 tenantId: 'tenant-123',
-                role: 'admin' as const,
+                role: 'admin' as 'admin' | 'provider' | 'client',
             };
 
             const isAdmin = ctx.role === 'admin';
@@ -56,7 +55,7 @@ describe('tRPC Procedure Authorization', () => {
                 user: { id: 'user-123', email: 'client@example.com' },
                 userId: 'user-123',
                 tenantId: 'tenant-123',
-                role: 'client' as const,
+                role: 'client' as 'admin' | 'provider' | 'client',
             };
 
             const isProviderOrAdmin = ctx.role === 'provider' || ctx.role === 'admin';
@@ -68,7 +67,7 @@ describe('tRPC Procedure Authorization', () => {
                 user: { id: 'user-123', email: 'provider@example.com' },
                 userId: 'user-123',
                 tenantId: 'tenant-123',
-                role: 'provider' as const,
+                role: 'provider' as 'admin' | 'provider' | 'client',
             };
 
             const isProviderOrAdmin = ctx.role === 'provider' || ctx.role === 'admin';
@@ -80,7 +79,7 @@ describe('tRPC Procedure Authorization', () => {
                 user: { id: 'user-123', email: 'admin@example.com' },
                 userId: 'user-123',
                 tenantId: 'tenant-123',
-                role: 'admin' as const,
+                role: 'admin' as 'admin' | 'provider' | 'client',
             };
 
             const isProviderOrAdmin = ctx.role === 'provider' || ctx.role === 'admin';
@@ -90,22 +89,22 @@ describe('tRPC Procedure Authorization', () => {
 });
 
 describe('Role-Based Access Control (RBAC)', () => {
-    const roles = ['admin', 'provider', 'client'] as const;
+    type Role = 'admin' | 'provider' | 'client';
 
     describe('role hierarchy', () => {
         it('admin should have highest privilege level', () => {
-            const adminRole = 'admin';
+            const adminRole: Role = 'admin';
             expect(adminRole === 'admin').toBe(true);
         });
 
         it('provider should have mid privilege level', () => {
-            const providerRole = 'provider';
+            const providerRole: Role = 'provider';
             const canAccessProvider = providerRole === 'provider' || providerRole === 'admin';
             expect(canAccessProvider).toBe(true);
         });
 
         it('client should have lowest privilege level', () => {
-            const clientRole = 'client';
+            const clientRole: Role = 'client';
             const canAccessProvider = clientRole === 'provider' || clientRole === 'admin';
             const canAccessAdmin = clientRole === 'admin';
             expect(canAccessProvider).toBe(false);
@@ -114,7 +113,7 @@ describe('Role-Based Access Control (RBAC)', () => {
     });
 
     describe('route protection simulation', () => {
-        const testRouteAccess = (role: 'admin' | 'provider' | 'client', route: string) => {
+        const testRouteAccess = (role: Role, route: string) => {
             if (route.startsWith('/admin')) {
                 return role === 'admin';
             }

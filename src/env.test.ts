@@ -4,8 +4,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 vi.mock('@t3-oss/env-nextjs', () => ({
     createEnv: vi.fn((config) => {
         // Return a mock that validates using the provided schema
-        const serverSchema = config.server || {};
-        const clientSchema = config.client || {};
+        const _serverSchema = config.server || {};
+        const _clientSchema = config.client || {};
 
         return {
             NODE_ENV: process.env.NODE_ENV || 'test',

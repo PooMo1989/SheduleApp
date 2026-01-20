@@ -7,11 +7,9 @@
 
 // Import database types for use in this file
 import type {
-    Database,
     Tables,
     TablesInsert,
     TablesUpdate,
-    Enums
 } from './database.types';
 
 // Re-export all database types
