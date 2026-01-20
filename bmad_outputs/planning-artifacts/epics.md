@@ -417,21 +417,22 @@ So that **each tenant's data is completely isolated from other tenants** (FR57).
 
 ---
 
-### Story 1.4: User Registration (Email/Password)
+### Story 1.4: Admin Registration & Tenant Creation ✅ UPDATED
 
-As a **client**,
-I want **to register with my email, mobile, and password**,
-So that **I can create an account to book appointments** (FR11).
+As an **admin (first user)**,
+I want **to register and create my company account**,
+So that **I can set up my business and invite team members** (FR11, FR57).
+
+> **UPDATED (2026-01-21):** Registration now creates a new tenant per signup. The first user becomes the admin. Clients register via invitation or lazy signup during booking.
 
 **Acceptance Criteria:**
 
 **Given** I am on the registration page
 **When** I enter valid email, mobile number, and password
-**Then** my account is created in Supabase Auth
-**And** a user record is created in the `users` table with `role: 'client'`
-**And** the user is associated with the correct tenant
-**And** I am redirected to the dashboard
-**And** a welcome message is displayed
+**Then** a new tenant is created with an email-based slug (e.g., `john-example-com`)
+**And** my account is created as role `admin` of that tenant
+**And** I am redirected to `/admin/settings` to complete company setup
+**And** I can then invite team members via `/admin/team`
 
 **Given** I enter an email that already exists
 **When** I submit the registration form
@@ -441,6 +442,11 @@ So that **I can create an account to book appointments** (FR11).
 **Given** I enter a password less than 8 characters
 **When** I submit the form
 **Then** I see a validation error "Password must be at least 8 characters"
+
+**User Flows:**
+- **Admin Registration:** Register → Create tenant → Admin role → Setup company → Invite team
+- **Staff/Provider Onboarding:** Receive invite → Accept → Join tenant as staff/provider
+- **Client Onboarding:** Book appointment → Inline registration (Story 3.6) → Join tenant as client
 
 ---
 

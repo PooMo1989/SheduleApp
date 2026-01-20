@@ -327,8 +327,14 @@ Priya only sees slots that are **truly bookable**. No frustration from unavailab
 | Multi-Tenancy | Single DB with tenant isolation (tenant_id on all tables) |
 | Role-Based Access Control | Admin, Provider, Client roles with granular permissions |
 | Data Isolation | Strict tenant separation; no cross-tenant data access |
-| Onboarding | Quick tenant setup flow (for future SaaS expansion) |
+| **Admin-First Onboarding** | First registration creates tenant + admin; team invited after |
 | White-Label (Phase 2) | Custom branding per tenant |
+
+> **Onboarding Flow (Implemented 2026-01-21):**
+> 1. **Admin registers** → New tenant created (slug from email) → Role: admin
+> 2. **Admin configures company** → Company name, branding, business hours
+> 3. **Admin invites team** → Staff/Providers receive email invitations
+> 4. **Clients register via booking** → Inline registration during booking flow (lazy signup)
 
 ### Technical Architecture Considerations
 
