@@ -215,6 +215,18 @@ Provider → Limited access (own schedule, assigned clients)
 Client → Booking access only
 ```
 
+**Tenant Resolution Order (Critical for Multi-Tenancy):**
+Middleware must follow this exact order:
+1. **Identify Tenant** - Extract from URL slug or subdomain (e.g., `/book/[tenantSlug]`)
+2. **Set Tenant Context** - Store tenant_id in request context
+3. **Authenticate User** - Then verify session and check user belongs to tenant
+
+> ⚠️ **Security Rule:** Never authenticate first and determine tenant later. This prevents users from accessing wrong tenant's data.
+
+**Cookie Configuration (for Subdomain Phase):**
+- Session cookies: `SameSite=Strict`, host-only (not domain-wide)
+- Prevents session bleeding between `tenant1.app.com` and `tenant2.app.com`
+
 ---
 
 ### API & Communication Patterns

@@ -496,6 +496,8 @@ Priya only sees slots that are **truly bookable**. No frustration from unavailab
 ### 9. Service & Provider Administration
 
 - **FR43**: Admin can create/edit/delete services
+- **FR43.1**: Admin Interface includes a persistent navigation menu with links to: Dashboard, Bookings, Services, Team, Company, Widget, Settings
+- **FR43.2**: "Company" section separates business identity (branding, hours) from technical system "Settings"
 - **FR44**: Admin can create services within respective modules (Consultations or Classes)
 - **FR45**: Admin can set service capacity (for Group Classes)
 - **FR46**: Admin can assign providers to services

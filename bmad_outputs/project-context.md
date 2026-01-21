@@ -70,6 +70,57 @@ _Documented after discovery phase_
 
 ---
 
+## SaaS Multi-Tenancy Security Guidelines
+
+> **Critical:** These rules prevent cross-tenant data leaks. Violations are security incidents.
+
+### Tenant Resolution Order (Middleware Flow)
+The order of operations in middleware is **critical**:
+1. **Identify Tenant** - Extract from subdomain/slug first
+2. **Set Context** - Switch app context to that tenant
+3. **Authenticate** - Then verify user session
+
+**⚠️ Never authenticate first and identify tenant later.**
+
+### Cache Key Naming
+All cache keys **must** include tenant_id to prevent data bleeding:
+```typescript
+// ✅ Correct
+const cacheKey = ['tenant', tenantId, 'bookings', date];
+const cacheKey = `tenant_${tenantId}_availability_${providerId}`;
+
+// ❌ Wrong - will leak across tenants
+const cacheKey = ['bookings', date];
+```
+
+### Storage Path Isolation
+All file uploads must use tenant-isolated paths:
+```
+storage/tenants/{tenant_id}/photos/...
+storage/tenants/{tenant_id}/documents/...
+```
+**Never** store files in shared paths.
+
+### Cookie Configuration (Subdomains)
+When using subdomain-based multi-tenancy:
+- Cookies must be **host-only** (not domain-wide)
+- Use `SameSite=Strict` for session cookies
+- Supabase session cookies should not use wildcard domain
+
+### File Upload Validation
+Enforce strict limits to prevent storage abuse:
+- Max file size: 5MB (images), 10MB (documents)
+- Allowed types: `image/jpeg`, `image/png`, `image/webp`, `application/pdf`
+- Validate on both client and server
+
+### Background Jobs
+When processing background jobs (emails, reminders):
+- Job payload **must** include `tenant_id`
+- Restore tenant context before processing
+- Log tenant_id in all job-related logs
+
+---
+
 ## Usage Guidelines
 
 **For AI Agents:**
@@ -86,4 +137,4 @@ _Documented after discovery phase_
 - Review quarterly for outdated rules
 - Remove rules that become obvious over time
 
-Last Updated: 2026-01-15
+Last Updated: 2026-01-21

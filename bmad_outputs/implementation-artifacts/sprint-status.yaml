@@ -62,6 +62,7 @@ development_status:
   2-5-role-assignment-and-provider-linking: backlog  # NEW: Promote to Provider/Admin
   2-6-google-calendar-oauth: backlog  # RENAMED from 2.5
   2-7-4-layer-availability-engine: backlog  # RENAMED from 2.6
+  2-8-admin-dashboard-and-navigation-shell: backlog  # NEW: Admin sidebar + navigation
   epic-2-retrospective: optional
 
   # === Epic 3: Embeddable Booking Widget ===

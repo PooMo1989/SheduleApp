@@ -306,6 +306,13 @@ This document provides the complete epic and story breakdown for sheduleApp, dec
 
 **User Outcome:** Companies have a semi-branded URL without custom domain complexity.
 
+**Prerequisites (Security Audit Before Implementation):**
+- [ ] Verify session cookies are host-only (not domain-wide wildcard)
+- [ ] Confirm `SameSite=Strict` on all session cookies
+- [ ] Test that sessions don't bleed between `tenant1.app.com` and `tenant2.app.com`
+- [ ] Verify cache keys include tenant_id prefix
+- [ ] Confirm Supabase Auth redirect URLs work with subdomains
+
 **Note:** Implement after MVP when onboarding multiple tenants.
 
 ---
@@ -351,6 +358,124 @@ This document provides the complete epic and story breakdown for sheduleApp, dec
 - Review compliance/regulatory requirements for holding tenant funds
 
 **Note:** Defer until after Epic 10 (basic PayHere integration) is complete. Epic 10 can use centralized model for initial implementation.
+
+---
+
+### Phase 5: Modular Feature Flags & Business Type Support
+**Goal:** Support different business types (solo consultants, multi-provider centers, studios, resource rentals) with configurable modules that feel "installed/uninstalled" per tenant.
+
+**Target Business Types:**
+| Type | Example | Enabled Modules |
+|------|---------|-----------------|
+| **Solo Consultant** | Psychologist, tutor, lawyer | Bookings only (no Team, no Classes) |
+| **Multi-Provider Center** | Wellness center, salon | Bookings + Team |
+| **Studio/Gym** | Yoga studio, fitness center | Bookings + Team + Classes |
+| **Resource Rental** | Courts, pools, meeting rooms | Resources module (booking *things* not *people*) |
+
+---
+
+**Module Architecture Approach: Feature Flags + Code Splitting**
+
+We use a hybrid approach that combines database-level feature flags with frontend code splitting. This gives tenants the experience of "installing/uninstalling" modules while keeping implementation simple.
+
+| Layer | Approach | Purpose |
+|-------|----------|---------|
+| **Database** | Feature Flags | Control which modules are enabled |
+| **Backend** | tRPC Procedure Guards | Block API access to disabled modules |
+| **Frontend** | Dynamic Imports | Only load module code when enabled |
+| **UI** | Conditional Rendering | Hide navigation/UI for disabled modules |
+
+**Why NOT True Plugin Architecture:**
+True plugin systems (like WordPress) are needed only if:
+- Third-party developers create modules
+- There's a marketplace for plugins
+- Tenants build custom modules
+
+For ScheduleApp, Feature Flags + Code Splitting provides:
+- ✅ Modules feel "installed/uninstalled" to tenants
+- ✅ Smaller bundle size (unused modules not loaded)
+- ✅ Simple implementation
+- ✅ No separate deployment per tenant
+
+---
+
+**Architectural Requirements:**
+
+1. **Feature Flags Table:**
+```sql
+CREATE TABLE tenant_features (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id uuid REFERENCES tenants(id),
+  feature_key text NOT NULL, -- 'team', 'classes', 'resources', 'payments', etc.
+  enabled boolean DEFAULT false,
+  config jsonb, -- Optional per-feature settings
+  UNIQUE(tenant_id, feature_key)
+);
+```
+
+2. **Tenant Business Type:**
+```sql
+ALTER TABLE tenants ADD COLUMN business_type text DEFAULT 'center';
+-- Values: 'solo', 'center', 'studio', 'rental'
+```
+
+3. **Backend: tRPC Feature Guard:**
+```typescript
+// Reusable middleware for feature-gated procedures
+const requireFeature = (feature: string) => t.middleware(async ({ ctx, next }) => {
+  const enabled = await hasFeature(ctx.tenantId, feature);
+  if (!enabled) throw new TRPCError({ code: 'FORBIDDEN', message: `${feature} module not enabled` });
+  return next();
+});
+
+// Usage in router
+export const classesRouter = router({
+  list: protectedProcedure
+    .use(requireFeature('classes'))
+    .query(async ({ ctx }) => { /* ... */ }),
+});
+```
+
+4. **Frontend: Dynamic Module Loading:**
+```typescript
+// Only download module code when feature is enabled
+const ResourcesModule = dynamic(
+  () => import('@/features/resources/ResourcesPage'),
+  { loading: () => <ModuleSkeleton /> }
+);
+
+// In layout/page
+{hasFeature('resources') && <ResourcesModule />}
+```
+
+5. **Client-Side Feature Hook:**
+```typescript
+const { hasFeature, enabledFeatures, isLoading } = useTenantFeatures();
+
+// Navigation example
+{hasFeature('team') && <SidebarItem href="/admin/team" icon={Users} label="Team" />}
+{hasFeature('classes') && <SidebarItem href="/admin/classes" icon={Calendar} label="Classes" />}
+{hasFeature('resources') && <SidebarItem href="/admin/resources" icon={Building} label="Resources" />}
+```
+
+6. **Onboarding Wizard:**
+- New signup asks: "What do you want to schedule?"
+  - [ ] Appointments with people (1:1 consultations)
+  - [ ] Group classes or sessions
+  - [ ] Resources (rooms, courts, equipment)
+- Auto-enables relevant modules based on selection
+- Can be changed later in Settings → Modules
+
+---
+
+**Implementation Phases:**
+- **5.1:** Add `tenant_features` table and `useTenantFeatures()` hook
+- **5.2:** Add `requireFeature()` tRPC middleware for API guards
+- **5.3:** Refactor sidebar/navigation to use dynamic imports + feature checks
+- **5.4:** Add onboarding wizard with business type selection
+- **5.5:** Build Resource Booking module (for courts/pools - different UX from people booking)
+
+**Note:** Defer until after core MVP is stable. Current MVP targets Multi-Provider Center business type. Solo consultants can use the same product (Team module auto-hidden if they're the only user).
 
 ---
 
@@ -737,11 +862,76 @@ So that **they can perform their duties or be booked for services**.
 **Then** a Provider Profile is created for them
 **And** I can edit their Bio, Photo, and Display Name
 **And** I can assign them to specific Services (from Story 2.3)
-**And** I can set their Availability Schedule (Story 2.7)
+
+**Given** I am editing a Provider's profile (FR48, FR49)
+**When** I access the "Availability" tab
+**Then** I see a visual weekly schedule builder
+**And** I can drag to set recurring time blocks (e.g., Mon 9AM-5PM)
+**And** I can add/edit/delete date-specific overrides (e.g., "Dec 25: Unavailable")
+**And** overrides show with a visual indicator (different color)
+**And** changes are saved to `provider_schedules` and `schedule_overrides` tables
 
 **Given** a user is now a Provider
 **When** I view the "Services" page
 **Then** they appear as an available provider for their assigned services
+
+**Implementation Note (File Uploads):**
+- Provider photos must be stored in tenant-isolated paths: `storage/tenants/{tenant_id}/providers/{provider_id}/...`
+- Validate file types: `image/jpeg`, `image/png`, `image/webp` only
+- Max file size: 5MB
+- See `project-context.md` for full file validation rules
+
+---
+
+### Story 2.5.1: File Upload Infrastructure (Supabase Storage)
+
+As a **developer**,
+I want **a file upload system using Supabase Storage with S3-compatible patterns**,
+So that **providers and companies can upload photos while maintaining portability**.
+
+**Acceptance Criteria:**
+
+**Given** the storage infrastructure needs setup
+**When** the configuration is complete
+**Then** a Supabase Storage bucket `tenant-assets` exists
+**And** RLS policies restrict access to tenant's own files
+**And** files are organized by path: `{tenant_id}/{type}/{entity_id}/{filename}`
+
+**Given** an admin uploads a company logo
+**When** the upload completes
+**Then** the file is stored at `{tenant_id}/company/logo.{ext}`
+**And** `tenants.logo_url` is updated with the public URL
+**And** old logo is deleted if exists
+
+**Given** an admin uploads a provider photo
+**When** the upload completes
+**Then** the file is stored at `{tenant_id}/providers/{provider_id}/photo.{ext}`
+**And** `providers.photo_url` is updated
+**And** old photo is deleted if exists
+
+**Given** file validation is needed
+**When** a file is selected for upload
+**Then** client validates: type (jpeg, png, webp), size (max 5MB)
+**And** server re-validates before storage
+**And** invalid files show clear error message
+
+**Technical Notes (Portability):**
+- Use Supabase Storage's S3-compatible API patterns
+- Avoid Supabase-specific features that don't exist in standard S3
+- File URLs use public bucket or signed URLs (prefer public for profile photos)
+- Reusable `<FileUpload />` component with progress indicator
+- See `project-context.md` for file validation rules
+
+**Reusable Component API:**
+```typescript
+<FileUpload 
+  bucket="tenant-assets"
+  path={`${tenantId}/providers/${providerId}`}
+  accept="image/*"
+  maxSize={5 * 1024 * 1024}
+  onUpload={(url) => updateProvider({ photoUrl: url })}
+/>
+```
 
 ---
 
@@ -798,6 +988,32 @@ So that **clients only see truly bookable times** (FR6-FR8).
 **Then** the system returns cached availability with warning (NFR16)
 **And** response time remains < 500ms (NFR2)
 
+---
+
+### Story 2.8: Admin Dashboard & Navigation Shell
+
+As an **admin**,
+I want **a persistent navigation sidebar**,
+So that **I can access all management modules from one place**.
+
+**Acceptance Criteria:**
+
+**Given** I am logged in as admin
+**When** I view the sidebar
+**Then** I see the following primary navigation links:
+1.  **Dashboard** (Overview & Stats)
+2.  **Bookings** (Link to Epic 8: Master calendar & list)
+3.  **Services** (Link to Epic 2: Manage services)
+4.  **Team** (Link to Epic 2: Manage providers & staff)
+5.  **Company** (Link to Story 2.0: Profile, Branding, Hours)
+6.  **Widget** (Link to Epic 3: Configuration & Embed code)
+7.  **Settings** (General system settings)
+
+**Given** I am on a mobile device
+**When** I view the admin area
+**Then** the sidebar is collapsible (hamburger menu)
+
+---
 ---
 
 ## Epic 3: Embeddable Booking Widget
@@ -1307,6 +1523,36 @@ So that **I see all appointments in one place** (FR42).
 ---
 
 ## Epic 7: Notifications & Reminders
+
+### Story 7.0: Background Jobs Infrastructure
+
+As a **developer**,
+I want **a background job system for sending notifications**,
+So that **emails and reminders are processed reliably without blocking requests**.
+
+**Acceptance Criteria:**
+
+**Given** the notification system needs background processing
+**When** the infrastructure is set up
+**Then** a job queue system is configured (Vercel Cron, Trigger.dev, or Inngest)
+**And** jobs can be scheduled for future execution (reminders)
+**And** job payloads include `tenant_id` for context isolation
+**And** failed jobs are logged with tenant context for debugging
+
+**Given** a background job runs
+**When** tenant context is needed
+**Then** tenant_id is extracted from job payload
+**And** tenant context is restored before processing
+**And** all database queries use restored tenant context
+
+**Technical Options:**
+- **Vercel Cron** - Simple, free tier, good for scheduled tasks
+- **Trigger.dev** - More features, webhooks, retries
+- **Inngest** - Event-driven, complex workflows
+
+**Note:** Start with Vercel Cron for MVP (simplest). Migrate to Trigger.dev if advanced features needed.
+
+---
 
 ### Story 7.1: Booking Confirmation Email
 

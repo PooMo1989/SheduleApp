@@ -6,3 +6,5 @@
 export { CompanyProfileForm } from './CompanyProfileForm';
 export { BusinessHoursForm } from './BusinessHoursForm';
 export { BrandingForm } from './BrandingForm';
+export { AdminSidebar } from './AdminSidebar';
+export { AdminLayoutShell } from './AdminLayoutShell';
