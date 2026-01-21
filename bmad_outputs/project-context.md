@@ -138,23 +138,24 @@ if (roles.includes('provider') || roles.includes('admin')) { ... }
 - **client**: Book appointments, view own history
 
 ### Provider Profiles
-Providers have a separate `provider_profiles` table for booking-specific data:
+Providers are stored in the `providers` table with booking-specific data:
 
 ```sql
-provider_profiles:
-  - user_id (PK, FK to users) -- NOT a separate ID
-  - bio, photo_url, calendar_tokens, is_active
+providers:
+  - id (PK, UUID)
+  - user_id (FK to users) -- Links to user account
+  - tenant_id, name, bio, photo_url, is_active
 ```
 
-**Key:** `user_id` IS the provider ID. No separate provider identity.
+**Key:** When a user gets 'provider' role, a matching `providers` record is created with their `user_id`.
 
 ### Service Assignments
-Services link directly to users (providers):
+Services link to providers via `service_providers`:
 
 ```sql
-service_assignments:
-  - user_id (FK to users where 'provider' in roles)
-  - service_id (FK to services)
+service_providers:
+  - provider_id (FK to providers.id)
+  - service_id (FK to services.id)
 ```
 
 ### Granular Permissions (Post-MVP)

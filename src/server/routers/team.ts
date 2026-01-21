@@ -289,7 +289,7 @@ export const teamRouter = router({
             // If adding 'provider' role, create provider_profile if not exists
             if (roles.includes('provider')) {
                 const { data: existingProfile } = await ctx.supabase
-                    .from('provider_profiles')
+                    .from('providers')
                     .select('user_id')
                     .eq('user_id', userId)
                     .single();
@@ -304,7 +304,7 @@ export const teamRouter = router({
 
                     if (user) {
                         await ctx.supabase
-                            .from('provider_profiles')
+                            .from('providers')
                             .insert({
                                 user_id: userId,
                                 tenant_id: user.tenant_id,
@@ -370,7 +370,7 @@ export const teamRouter = router({
             // Create provider profile if adding provider role
             if (role === 'provider') {
                 const { data: existingProfile } = await ctx.supabase
-                    .from('provider_profiles')
+                    .from('providers')
                     .select('user_id')
                     .eq('user_id', userId)
                     .single();
@@ -383,7 +383,7 @@ export const teamRouter = router({
                         .single();
 
                     if (userData) {
-                        await ctx.supabase.from('provider_profiles').insert({
+                        await ctx.supabase.from('providers').insert({
                             user_id: userId,
                             tenant_id: userData.tenant_id,
                             name: userData.full_name || 'Provider',
@@ -458,7 +458,7 @@ export const teamRouter = router({
             // If removing provider role, deactivate provider profile
             if (role === 'provider') {
                 await ctx.supabase
-                    .from('provider_profiles')
+                    .from('providers')
                     .update({ is_active: false })
                     .eq('user_id', userId);
             }
