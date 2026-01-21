@@ -110,7 +110,12 @@ export function FileUpload({
     }, [handleFile]);
 
     const handleDelete = useCallback(async () => {
-        if (!currentUrl) return;
+        console.log('[FileUpload] handleDelete called', { currentUrl, preview, isDeleted });
+
+        if (!currentUrl) {
+            console.log('[FileUpload] handleDelete: currentUrl is falsy, returning early');
+            return;
+        }
 
         setIsDeleting(true);
         setError(null);
@@ -118,21 +123,33 @@ export function FileUpload({
         try {
             // Extract path from URL and delete
             const filePath = extractPathFromUrl(currentUrl, bucket);
+            console.log('[FileUpload] extracted filePath:', filePath);
+
             if (filePath) {
-                await deleteFile(bucket, filePath);
+                const result = await deleteFile(bucket, filePath);
+                console.log('[FileUpload] deleteFile result:', result);
+
+                if (result.error) {
+                    console.error('[FileUpload] deleteFile error:', result.error);
+                    setError(`Delete failed: ${result.error}`);
+                    return;
+                }
+            } else {
+                console.log('[FileUpload] no filePath extracted, skipping storage delete');
             }
+
             setPreview(null);
-            setIsDeleted(true); // Mark as deleted
-            // Reset file input
+            setIsDeleted(true);
             if (inputRef.current) inputRef.current.value = '';
+            console.log('[FileUpload] calling onDelete callback');
             onDelete?.();
         } catch (err) {
-            console.error('Delete failed:', err);
+            console.error('[FileUpload] Delete exception:', err);
             setError('Failed to delete file');
         } finally {
             setIsDeleting(false);
         }
-    }, [currentUrl, bucket, onDelete]);
+    }, [currentUrl, bucket, onDelete, preview, isDeleted]);
 
     // Don't show currentUrl if we just deleted the file
     const displayUrl = isDeleted ? preview : (preview || currentUrl);
