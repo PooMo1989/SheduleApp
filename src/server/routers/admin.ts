@@ -133,9 +133,17 @@ export const adminRouter = router({
                 .single();
 
             if (error) {
+                console.error('updateSettings Supabase error:', {
+                    code: error.code,
+                    message: error.message,
+                    details: error.details,
+                    hint: error.hint,
+                    tenantId: ctx.tenantId,
+                    input: input,
+                });
                 throw new TRPCError({
                     code: 'INTERNAL_SERVER_ERROR',
-                    message: 'Failed to update settings',
+                    message: `Failed to update settings: ${error.message}`,
                     cause: error,
                 });
             }
