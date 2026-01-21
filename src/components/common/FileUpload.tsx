@@ -110,46 +110,39 @@ export function FileUpload({
     }, [handleFile]);
 
     const handleDelete = useCallback(async () => {
-        console.log('[FileUpload] handleDelete called', { currentUrl, preview, isDeleted });
+        // Store the URL to delete before we clear anything
+        const urlToDelete = currentUrl || preview;
 
-        if (!currentUrl) {
-            console.log('[FileUpload] handleDelete: currentUrl is falsy, returning early');
+        if (!urlToDelete) {
             return;
         }
 
         setIsDeleting(true);
         setError(null);
 
-        try {
-            // Extract path from URL and delete
-            const filePath = extractPathFromUrl(currentUrl, bucket);
-            console.log('[FileUpload] extracted filePath:', filePath);
+        // Update UI immediately - this is the most important part
+        setPreview(null);
+        setIsDeleted(true);
+        if (inputRef.current) inputRef.current.value = '';
 
+        // Call the onDelete callback immediately so parent updates
+        onDelete?.();
+
+        try {
+            // Attempt to delete from storage (non-blocking for UI)
+            const filePath = extractPathFromUrl(urlToDelete, bucket);
             if (filePath) {
                 const result = await deleteFile(bucket, filePath);
-                console.log('[FileUpload] deleteFile result:', result);
-
                 if (result.error) {
-                    console.error('[FileUpload] deleteFile error:', result.error);
-                    setError(`Delete failed: ${result.error}`);
-                    return;
+                    console.warn('Storage delete failed (file may already be deleted):', result.error);
                 }
-            } else {
-                console.log('[FileUpload] no filePath extracted, skipping storage delete');
             }
-
-            setPreview(null);
-            setIsDeleted(true);
-            if (inputRef.current) inputRef.current.value = '';
-            console.log('[FileUpload] calling onDelete callback');
-            onDelete?.();
         } catch (err) {
-            console.error('[FileUpload] Delete exception:', err);
-            setError('Failed to delete file');
+            console.warn('Storage delete exception:', err);
         } finally {
             setIsDeleting(false);
         }
-    }, [currentUrl, bucket, onDelete, preview, isDeleted]);
+    }, [currentUrl, preview, bucket, onDelete]);
 
     // Don't show currentUrl if we just deleted the file
     const displayUrl = isDeleted ? preview : (preview || currentUrl);
