@@ -4,7 +4,7 @@ import { trpc } from '@/lib/trpc/client';
 
 /**
  * Team List Component
- * Story 2.4 & 2.5: Display team members with role actions
+ * Story 2.4 & 2.4.1: Display team members with multi-role actions
  */
 export function TeamList() {
     const { data, isLoading, error } = trpc.team.getMembers.useQuery();
@@ -23,13 +23,13 @@ export function TeamList() {
         },
     });
 
-    const promoteToAdmin = trpc.team.promoteToAdmin.useMutation({
+    const addRole = trpc.team.addRole.useMutation({
         onSuccess: () => {
             utils.team.getMembers.invalidate();
         },
     });
 
-    const makeProvider = trpc.team.makeProvider.useMutation({
+    const removeRole = trpc.team.removeRole.useMutation({
         onSuccess: () => {
             utils.team.getMembers.invalidate();
         },
@@ -58,15 +58,23 @@ export function TeamList() {
         return new Date(date).toLocaleDateString();
     };
 
-    const handlePromoteToAdmin = (userId: string, name: string | null) => {
-        if (confirm(`Promote ${name || 'this user'} to Admin?`)) {
-            promoteToAdmin.mutate({ userId });
+    const formatRoles = (roles: string[]) => {
+        return roles.map(r => r.charAt(0).toUpperCase() + r.slice(1)).join(', ');
+    };
+
+    const handleAddRole = (userId: string, name: string | null, role: 'admin' | 'provider') => {
+        if (confirm(`Add ${role} role to ${name || 'this user'}?`)) {
+            addRole.mutate({ userId, role });
         }
     };
 
-    const handleMakeProvider = (userId: string, name: string | null) => {
-        if (confirm(`Create a Provider profile for ${name || 'this user'}?`)) {
-            makeProvider.mutate({ userId });
+    const handleRemoveRole = (userId: string, name: string | null, role: 'admin' | 'provider', rolesCount: number) => {
+        if (rolesCount <= 1) {
+            alert('User must have at least one role');
+            return;
+        }
+        if (confirm(`Remove ${role} role from ${name || 'this user'}?`)) {
+            removeRole.mutate({ userId, role });
         }
     };
 
@@ -96,9 +104,21 @@ export function TeamList() {
                                         <p className="font-medium text-gray-900">
                                             {member.name || 'Unnamed'}
                                         </p>
-                                        <p className="text-sm text-gray-500 capitalize">
-                                            {member.role}
-                                        </p>
+                                        <div className="flex items-center gap-1 mt-1">
+                                            {member.roles.map(role => (
+                                                <span
+                                                    key={role}
+                                                    className={`px-2 py-0.5 text-xs rounded-full ${role === 'admin'
+                                                            ? 'bg-purple-100 text-purple-700'
+                                                            : role === 'provider'
+                                                                ? 'bg-blue-100 text-blue-700'
+                                                                : 'bg-gray-100 text-gray-700'
+                                                        }`}
+                                                >
+                                                    {role}
+                                                </span>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -106,25 +126,41 @@ export function TeamList() {
                                         Active
                                     </span>
 
-                                    {/* Role Actions - per Story 2.5 */}
-                                    {member.role !== 'admin' && (
+                                    {/* Add/Remove Role Actions */}
+                                    {!member.roles.includes('admin') && (
                                         <button
-                                            onClick={() => handlePromoteToAdmin(member.id, member.name)}
-                                            disabled={promoteToAdmin.isPending}
-                                            className="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50"
-                                            title="Promote to Admin"
+                                            onClick={() => handleAddRole(member.id, member.name, 'admin')}
+                                            disabled={addRole.isPending}
+                                            className="text-sm text-purple-600 hover:text-purple-700 disabled:opacity-50"
                                         >
-                                            Promote to Admin
+                                            +Admin
                                         </button>
                                     )}
-                                    {member.role !== 'provider' && member.role !== 'admin' && (
+                                    {member.roles.includes('admin') && (
                                         <button
-                                            onClick={() => handleMakeProvider(member.id, member.name)}
-                                            disabled={makeProvider.isPending}
-                                            className="text-sm text-purple-600 hover:text-purple-700 disabled:opacity-50"
-                                            title="Make Provider"
+                                            onClick={() => handleRemoveRole(member.id, member.name, 'admin', member.roles.length)}
+                                            disabled={removeRole.isPending}
+                                            className="text-sm text-red-600 hover:text-red-700 disabled:opacity-50"
                                         >
-                                            Make Provider
+                                            -Admin
+                                        </button>
+                                    )}
+                                    {!member.roles.includes('provider') && (
+                                        <button
+                                            onClick={() => handleAddRole(member.id, member.name, 'provider')}
+                                            disabled={addRole.isPending}
+                                            className="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50"
+                                        >
+                                            +Provider
+                                        </button>
+                                    )}
+                                    {member.roles.includes('provider') && (
+                                        <button
+                                            onClick={() => handleRemoveRole(member.id, member.name, 'provider', member.roles.length)}
+                                            disabled={removeRole.isPending}
+                                            className="text-sm text-red-600 hover:text-red-700 disabled:opacity-50"
+                                        >
+                                            -Provider
                                         </button>
                                     )}
                                 </div>
@@ -149,7 +185,7 @@ export function TeamList() {
                                 <div>
                                     <p className="font-medium text-gray-700">{invite.email}</p>
                                     <p className="text-sm text-gray-400">
-                                        Invited {formatDate(invite.invitedAt)}
+                                        Invited {formatDate(invite.invitedAt)} • Roles: {formatRoles(invite.roles)}
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-2">
