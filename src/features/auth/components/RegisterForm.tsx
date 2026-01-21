@@ -8,26 +8,13 @@ import { registerFormSchema, type RegisterFormInput } from '../schemas/register'
 import { createClient } from '@/lib/supabase/client';
 
 /**
- * Generate a unique slug from email address
- * e.g., "john@example.com" -> "john-example-com"
- */
-function generateSlugFromEmail(email: string): string {
-    return email
-        .toLowerCase()
-        .replace('@', '-')
-        .replace(/\./g, '-')
-        .replace(/[^a-z0-9-]/g, '')
-        .slice(0, 50); // Limit length
-}
-
-/**
  * Registration Form Component
  * 
  * Admin-First Flow:
- * 1. User signs up with email
- * 2. Creates a new tenant (company) with email-based slug
- * 3. User becomes the first admin of that tenant
- * 4. Redirects to admin settings to complete company setup
+ * 1. User signs up with email/password
+ * 2. Supabase creates auth.user
+ * 3. Database trigger (handle_new_user) automatically creates tenant + profile as admin
+ * 4. User is redirected to admin dashboard
  */
 export function RegisterForm() {
     const router = useRouter();
@@ -55,7 +42,7 @@ export function RegisterForm() {
         setIsLoading(true);
 
         try {
-            // 1. Create auth user using client-side Supabase
+            // Create auth user - database trigger handles tenant/profile creation
             const { data: authData, error: authError } = await supabase.auth.signUp({
                 email: data.email,
                 password: data.password,
@@ -82,74 +69,14 @@ export function RegisterForm() {
                 return;
             }
 
-            // 2. Create a new tenant for this admin
-            const slug = generateSlugFromEmail(data.email);
-            const { data: tenantData, error: tenantError } = await supabase
-                .from('tenants')
-                .insert({
-                    name: data.fullName ? `${data.fullName}'s Company` : 'My Company',
-                    slug: slug,
-                    settings: {},
-                })
-                .select('id')
-                .single();
-
-            if (tenantError) {
-                console.error('Tenant creation failed:', tenantError);
-                // If slug already exists, try with a random suffix
-                if (tenantError.code === '23505') {
-                    const uniqueSlug = `${slug}-${Date.now().toString(36)}`;
-                    const { data: retryTenant, error: retryError } = await supabase
-                        .from('tenants')
-                        .insert({
-                            name: data.fullName ? `${data.fullName}'s Company` : 'My Company',
-                            slug: uniqueSlug,
-                            settings: {},
-                        })
-                        .select('id')
-                        .single();
-
-                    if (retryError || !retryTenant) {
-                        setError('Failed to create your company. Please try again.');
-                        return;
-                    }
-
-                    // Use the retry tenant
-                    await createUserProfile(authData.user.id, retryTenant.id, data);
-                } else {
-                    setError('Failed to create your company. Please try again.');
-                    return;
-                }
-            } else if (tenantData) {
-                // 3. Create user profile as ADMIN
-                await createUserProfile(authData.user.id, tenantData.id, data);
-            }
-
-            // 4. Handle Navigation - redirect to admin settings
+            // Redirect based on session state
             if (authData.session) {
+                // Auto-confirmed - redirect to admin dashboard
                 router.refresh();
-                await new Promise(resolve => setTimeout(resolve, 500));
-                router.push('/admin/settings'); // First time setup
+                router.push('/admin/dashboard');
             } else {
-                // Try immediate login for auto-confirm setups
-                try {
-                    const { data: signInData } = await supabase.auth.signInWithPassword({
-                        email: data.email,
-                        password: data.password,
-                    });
-
-                    if (signInData.session) {
-                        router.refresh();
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                        router.push('/admin/settings');
-                    } else {
-                        setError('Registration successful! Please check your email to verify your account.');
-                        setIsLoading(false);
-                    }
-                } catch {
-                    setError('Registration successful! Please check your email to verify your account.');
-                    setIsLoading(false);
-                }
+                // Email confirmation required
+                setError('Registration successful! Please check your email to verify your account.');
             }
 
         } catch (err) {
@@ -157,27 +84,6 @@ export function RegisterForm() {
             setError('An unexpected error occurred. Please try again.');
         } finally {
             setIsLoading(false);
-        }
-    };
-
-    // Helper to create user profile as admin
-    const createUserProfile = async (
-        userId: string,
-        tenantId: string,
-        data: RegisterFormInput
-    ) => {
-        const { error: profileError } = await supabase
-            .from('users')
-            .insert({
-                id: userId,
-                tenant_id: tenantId,
-                role: 'admin', // First user is always admin
-                full_name: data.fullName || null,
-                phone: data.phone,
-            });
-
-        if (profileError) {
-            console.error('Profile creation failed:', profileError);
         }
     };
 
