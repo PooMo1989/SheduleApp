@@ -8,6 +8,19 @@ import { registerFormSchema, type RegisterFormInput } from '../schemas/register'
 import { createClient } from '@/lib/supabase/client';
 
 /**
+ * Generate a unique slug from email address
+ * e.g., "john@example.com" -> "john-example-com"
+ */
+function generateSlugFromEmail(email: string): string {
+    return email
+        .toLowerCase()
+        .replace('@', '-')
+        .replace(/\./g, '-')
+        .replace(/[^a-z0-9-]/g, '')
+        .slice(0, 50); // Limit length
+}
+
+/**
  * Registration Form Component
  * 
  * Admin-First Flow:
@@ -69,21 +82,50 @@ export function RegisterForm() {
                 return;
             }
 
-            // 2. Create tenant and profile via server action (bypasses RLS)
-            const { createTenantAndProfile } = await import('../actions/registration');
-            const result = await createTenantAndProfile({
-                userId: authData.user.id,
-                email: data.email,
-                fullName: data.fullName,
-                phone: data.phone,
-            });
+            // 2. Create a new tenant for this admin
+            const slug = generateSlugFromEmail(data.email);
+            const { data: tenantData, error: tenantError } = await supabase
+                .from('tenants')
+                .insert({
+                    name: data.fullName ? `${data.fullName}'s Company` : 'My Company',
+                    slug: slug,
+                    settings: {},
+                })
+                .select('id')
+                .single();
 
-            if (!result.success) {
-                setError(result.error || 'Failed to complete registration.');
-                return;
+            if (tenantError) {
+                console.error('Tenant creation failed:', tenantError);
+                // If slug already exists, try with a random suffix
+                if (tenantError.code === '23505') {
+                    const uniqueSlug = `${slug}-${Date.now().toString(36)}`;
+                    const { data: retryTenant, error: retryError } = await supabase
+                        .from('tenants')
+                        .insert({
+                            name: data.fullName ? `${data.fullName}'s Company` : 'My Company',
+                            slug: uniqueSlug,
+                            settings: {},
+                        })
+                        .select('id')
+                        .single();
+
+                    if (retryError || !retryTenant) {
+                        setError('Failed to create your company. Please try again.');
+                        return;
+                    }
+
+                    // Use the retry tenant
+                    await createUserProfile(authData.user.id, retryTenant.id, data);
+                } else {
+                    setError('Failed to create your company. Please try again.');
+                    return;
+                }
+            } else if (tenantData) {
+                // 3. Create user profile as ADMIN
+                await createUserProfile(authData.user.id, tenantData.id, data);
             }
 
-            // 3. Handle Navigation - redirect to admin settings
+            // 4. Handle Navigation - redirect to admin settings
             if (authData.session) {
                 router.refresh();
                 await new Promise(resolve => setTimeout(resolve, 500));
@@ -115,6 +157,27 @@ export function RegisterForm() {
             setError('An unexpected error occurred. Please try again.');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    // Helper to create user profile as admin
+    const createUserProfile = async (
+        userId: string,
+        tenantId: string,
+        data: RegisterFormInput
+    ) => {
+        const { error: profileError } = await supabase
+            .from('users')
+            .insert({
+                id: userId,
+                tenant_id: tenantId,
+                role: 'admin', // First user is always admin
+                full_name: data.fullName || null,
+                phone: data.phone,
+            });
+
+        if (profileError) {
+            console.error('Profile creation failed:', profileError);
         }
     };
 
