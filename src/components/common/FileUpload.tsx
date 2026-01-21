@@ -41,6 +41,7 @@ export function FileUpload({
     const [error, setError] = useState<string | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
+    const [isDeleted, setIsDeleted] = useState(false); // Track if file was deleted
     const inputRef = useRef<HTMLInputElement>(null);
 
     const handleFile = useCallback(async (file: File) => {
@@ -59,9 +60,10 @@ export function FileUpload({
             return;
         }
 
-        // Create preview
+        // Create preview and reset deleted state
         const objectUrl = URL.createObjectURL(file);
         setPreview(objectUrl);
+        setIsDeleted(false);
 
         // Upload
         setIsUploading(true);
@@ -100,7 +102,11 @@ export function FileUpload({
 
     const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) handleFile(file);
+        if (file) {
+            handleFile(file);
+            // Reset input so same file can be selected again
+            e.target.value = '';
+        }
     }, [handleFile]);
 
     const handleDelete = useCallback(async () => {
@@ -116,6 +122,9 @@ export function FileUpload({
                 await deleteFile(bucket, filePath);
             }
             setPreview(null);
+            setIsDeleted(true); // Mark as deleted
+            // Reset file input
+            if (inputRef.current) inputRef.current.value = '';
             onDelete?.();
         } catch (err) {
             console.error('Delete failed:', err);
@@ -125,7 +134,8 @@ export function FileUpload({
         }
     }, [currentUrl, bucket, onDelete]);
 
-    const displayUrl = preview || currentUrl;
+    // Don't show currentUrl if we just deleted the file
+    const displayUrl = isDeleted ? preview : (preview || currentUrl);
 
     return (
         <div className="space-y-2">
