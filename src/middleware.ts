@@ -72,13 +72,14 @@ export async function middleware(request: NextRequest) {
         // Fetch role to determine correct dashboard
         const { data: userData } = await supabase
             .from('users')
-            .select('role')
+            .select('roles')
             .eq('id', user.id)
             .single();
 
-        const role = userData?.role || 'client';
-        if (role === 'admin') return NextResponse.redirect(new URL('/admin/dashboard', request.url));
-        if (role === 'provider') return NextResponse.redirect(new URL('/provider/dashboard', request.url));
+        const roles: string[] = userData?.roles || [];
+
+        if (roles.includes('admin')) return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+        if (roles.includes('provider')) return NextResponse.redirect(new URL('/provider/dashboard', request.url));
         return NextResponse.redirect(new URL('/dashboard', request.url));
     }
 
@@ -92,17 +93,19 @@ export async function middleware(request: NextRequest) {
 
     const { data: userData } = await supabase
         .from('users')
-        .select('role')
+        .select('roles')
         .eq('id', user.id)
         .single();
 
-    const role = userData?.role || 'client';
+    const roles: string[] = userData?.roles || [];
 
-    if (pathname.startsWith('/admin') && role !== 'admin') {
+    // Admin routes protection
+    if (pathname.startsWith('/admin') && !roles.includes('admin')) {
         return NextResponse.redirect(new URL('/dashboard?error=access_denied', request.url));
     }
 
-    if (pathname.startsWith('/provider') && role !== 'provider' && role !== 'admin') {
+    // Provider routes protection
+    if (pathname.startsWith('/provider') && !roles.includes('provider') && !roles.includes('admin')) {
         return NextResponse.redirect(new URL('/dashboard?error=access_denied', request.url));
     }
 
