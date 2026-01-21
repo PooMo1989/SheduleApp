@@ -42,7 +42,7 @@ export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
             user: ctx.user,
             userId: ctx.userId,
             tenantId: ctx.tenantId!,
-            role: ctx.role!,
+            roles: ctx.roles,
         },
     });
 });
@@ -51,7 +51,7 @@ export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
  * Admin procedure - requires admin role
  */
 export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
-    if (ctx.role !== 'admin') {
+    if (!ctx.roles.includes('admin')) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Admin access required' });
     }
     return next({ ctx });
@@ -61,7 +61,7 @@ export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
  * Provider procedure - requires provider or admin role
  */
 export const providerProcedure = protectedProcedure.use(async ({ ctx, next }) => {
-    if (ctx.role !== 'provider' && ctx.role !== 'admin') {
+    if (!ctx.roles.includes('provider') && !ctx.roles.includes('admin')) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Provider access required' });
     }
     return next({ ctx });

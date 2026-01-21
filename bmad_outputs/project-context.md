@@ -121,6 +121,50 @@ When processing background jobs (emails, reminders):
 
 ---
 
+## RBAC (Role-Based Access Control)
+
+### Multiple Roles Per User
+Users have a `roles: TEXT[]` array, not a single role. A user can be both admin AND provider.
+
+```typescript
+// Check roles
+if (roles.includes('admin')) { ... }
+if (roles.includes('provider') || roles.includes('admin')) { ... }
+```
+
+### Role Hierarchy
+- **admin**: Full tenant management (team, services, settings, billing)
+- **provider**: Can be booked, manage own schedule, connect calendar
+- **client**: Book appointments, view own history
+
+### Provider Profiles
+Providers have a separate `provider_profiles` table for booking-specific data:
+
+```sql
+provider_profiles:
+  - user_id (PK, FK to users) -- NOT a separate ID
+  - bio, photo_url, calendar_tokens, is_active
+```
+
+**Key:** `user_id` IS the provider ID. No separate provider identity.
+
+### Service Assignments
+Services link directly to users (providers):
+
+```sql
+service_assignments:
+  - user_id (FK to users where 'provider' in roles)
+  - service_id (FK to services)
+```
+
+### Granular Permissions (Post-MVP)
+For MVP, all admins have full permissions. Post-MVP, add:
+```sql
+users.permissions: TEXT[] -- ['manage_team', 'manage_services', 'view_reports']
+```
+
+---
+
 ## Usage Guidelines
 
 **For AI Agents:**

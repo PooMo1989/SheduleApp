@@ -8,11 +8,11 @@ import { NextResponse } from 'next/server';
  * 
  * Flow:
  * 1. Exchange auth code for session
- * 2. Fetch user's role from users table (created by database trigger)
- * 3. Redirect based on role:
- *    - admin → /admin/dashboard
- *    - provider → /provider/dashboard
- *    - client → /dashboard
+ * 2. Fetch user's roles from users table (created by database trigger)
+ * 3. Redirect based on roles:
+ *    - has 'admin' → /admin/dashboard
+ *    - has 'provider' → /provider/dashboard
+ *    - default → /dashboard
  */
 export async function GET(request: Request) {
     const { searchParams, origin } = new URL(request.url);
@@ -25,27 +25,22 @@ export async function GET(request: Request) {
         const { data: authData, error: authError } = await supabase.auth.exchangeCodeForSession(code);
 
         if (!authError && authData.user) {
-            // Fetch user role from users table
+            // Fetch user roles from users table
             // The database trigger (handle_new_user) creates the profile automatically
             const { data: userData } = await supabase
                 .from('users')
-                .select('role')
+                .select('roles')
                 .eq('id', authData.user.id)
                 .single();
 
-            // Determine redirect based on role
-            const role = userData?.role || 'client';
+            // Determine redirect based on roles (check admin first, then provider)
+            const roles: string[] = userData?.roles || ['client'];
             let redirectPath = '/dashboard';
 
-            switch (role) {
-                case 'admin':
-                    redirectPath = '/admin/dashboard';
-                    break;
-                case 'provider':
-                    redirectPath = '/provider/dashboard';
-                    break;
-                default:
-                    redirectPath = '/dashboard';
+            if (roles.includes('admin')) {
+                redirectPath = '/admin/dashboard';
+            } else if (roles.includes('provider')) {
+                redirectPath = '/provider/dashboard';
             }
 
             return NextResponse.redirect(`${origin}${redirectPath}`);

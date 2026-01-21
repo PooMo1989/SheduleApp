@@ -5,7 +5,7 @@ import type { Database } from '@/types/database.types';
 /**
  * tRPC Context
  * 
- * Contains user authentication info and role for access control.
+ * Contains user authentication info and roles for access control.
  * Passed to all tRPC procedures.
  */
 export interface Context {
@@ -13,7 +13,7 @@ export interface Context {
     user: User | null;
     userId: string | null;
     tenantId: string | null;
-    role: 'admin' | 'provider' | 'client' | null;
+    roles: ('admin' | 'provider' | 'client')[];
 }
 
 /**
@@ -24,13 +24,13 @@ export async function createContext(): Promise<Context> {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-        return { supabase, user: null, userId: null, tenantId: null, role: null };
+        return { supabase, user: null, userId: null, tenantId: null, roles: [] };
     }
 
-    // Get user profile with tenant and role
+    // Get user profile with tenant and roles
     const { data: profile } = await supabase
         .from('users')
-        .select('tenant_id, role')
+        .select('tenant_id, roles')
         .eq('id', user.id)
         .single();
 
@@ -39,7 +39,7 @@ export async function createContext(): Promise<Context> {
         user,
         userId: user.id,
         tenantId: profile?.tenant_id || null,
-        role: (profile?.role as 'admin' | 'provider' | 'client') || 'client',
+        roles: (profile?.roles as ('admin' | 'provider' | 'client')[]) || ['client'],
     };
 }
 

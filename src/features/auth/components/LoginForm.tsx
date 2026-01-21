@@ -49,24 +49,21 @@ export function LoginForm() {
             }
 
             if (authData.user) {
-                // Fetch user role for redirect
+                // Fetch user roles for redirect
                 const { data: userData } = await supabase
                     .from('users')
-                    .select('role')
+                    .select('roles')
                     .eq('id', authData.user.id)
                     .single();
 
-                // Redirect based on role
-                const role = userData?.role || 'client';
-                switch (role) {
-                    case 'admin':
-                        router.push('/admin/dashboard');
-                        break;
-                    case 'provider':
-                        router.push('/provider/dashboard');
-                        break;
-                    default:
-                        router.push('/dashboard');
+                // Redirect based on roles (admin first, then provider)
+                const roles: string[] = userData?.roles || ['client'];
+                if (roles.includes('admin')) {
+                    router.push('/admin/dashboard');
+                } else if (roles.includes('provider')) {
+                    router.push('/provider/dashboard');
+                } else {
+                    router.push('/dashboard');
                 }
                 router.refresh();
             }
