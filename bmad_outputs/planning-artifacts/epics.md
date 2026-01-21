@@ -887,7 +887,7 @@ So that **they can perform their duties or be booked for services**.
 
 As a **developer**,
 I want **a file upload system using Supabase Storage with S3-compatible patterns**,
-So that **providers and companies can upload photos while maintaining portability**.
+So that **users and companies can upload photos while maintaining portability**.
 
 **Acceptance Criteria:**
 
@@ -903,11 +903,23 @@ So that **providers and companies can upload photos while maintaining portabilit
 **And** `tenants.logo_url` is updated with the public URL
 **And** old logo is deleted if exists
 
-**Given** an admin uploads a provider photo
+**Given** any user (client, provider, admin) uploads their profile photo
+**When** the upload completes
+**Then** the file is stored at `{tenant_id}/users/{user_id}/avatar.{ext}`
+**And** `users.avatar_url` is updated with the public URL
+**And** old photo is deleted if exists
+**And** the photo is visible on their profile page
+
+**Given** a provider uploads their own public-facing photo (for booking display)
 **When** the upload completes
 **Then** the file is stored at `{tenant_id}/providers/{provider_id}/photo.{ext}`
 **And** `providers.photo_url` is updated
 **And** old photo is deleted if exists
+
+**Given** an admin needs to change a provider's photo
+**When** the admin accesses the provider's profile
+**Then** the admin can upload/replace the provider's photo
+**Note:** Provider photo is separate from user avatar - it's the public-facing image shown in booking widgets
 
 **Given** file validation is needed
 **When** a file is selected for upload
@@ -926,12 +938,19 @@ So that **providers and companies can upload photos while maintaining portabilit
 ```typescript
 <FileUpload 
   bucket="tenant-assets"
-  path={`${tenantId}/providers/${providerId}`}
+  path={`${tenantId}/users/${userId}`}
   accept="image/*"
   maxSize={5 * 1024 * 1024}
-  onUpload={(url) => updateProvider({ photoUrl: url })}
+  onUpload={(url) => updateProfile({ avatarUrl: url })}
 />
 ```
+
+**Storage Path Structure:**
+| Type | Path | Database Field |
+|------|------|----------------|
+| Company Logo | `{tenant_id}/company/logo.{ext}` | `tenants.logo_url` |
+| User Avatar | `{tenant_id}/users/{user_id}/avatar.{ext}` | `users.avatar_url` |
+| Provider Photo | `{tenant_id}/providers/{provider_id}/photo.{ext}` | `providers.photo_url` |
 
 ---
 

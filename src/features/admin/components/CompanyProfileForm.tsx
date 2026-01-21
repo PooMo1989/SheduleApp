@@ -3,10 +3,12 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { trpc } from '@/lib/trpc/client';
+import { FileUpload } from '@/components/common';
 
 /**
  * Company Profile Settings Form
  * Story 2.0: Admin Company Profile Setup
+ * Story 2.5.1: File Upload Infrastructure (Logo upload)
  * 
  * Per spec: Name, Logo, Timezone, Currency, URL slug, Guest Checkout
  */
@@ -52,6 +54,14 @@ export function CompanyProfileForm() {
         });
     };
 
+    const handleLogoUpload = (url: string) => {
+        updateSettings.mutate({ logo_url: url });
+    };
+
+    const handleLogoDelete = () => {
+        updateSettings.mutate({ logo_url: null });
+    };
+
     if (isLoading) {
         return <div className="animate-pulse bg-gray-100 h-64 rounded-lg" />;
     }
@@ -66,6 +76,20 @@ export function CompanyProfileForm() {
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Company Logo */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Company Logo</h3>
+                <FileUpload
+                    bucket="tenant-assets"
+                    path={`${settings?.id}/company/logo`}
+                    currentUrl={settings?.logo_url}
+                    onUpload={handleLogoUpload}
+                    onDelete={handleLogoDelete}
+                    label="Logo"
+                    helperText="This logo will appear on your booking page and emails"
+                />
+            </div>
+
             {/* Company Name & URL Slug */}
             <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Company Information</h3>
