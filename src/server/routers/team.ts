@@ -11,8 +11,15 @@ function generateToken(): string {
 }
 
 /**
+ * Valid roles for team members
+ */
+const validRoles = ['admin', 'provider', 'client'] as const;
+type Role = typeof validRoles[number];
+
+/**
  * Team Router
  * Story 2.4: Team Invitations & Member Management
+ * Story 2.4.1: Multi-Role Support
  */
 export const teamRouter = router({
     /**
@@ -20,10 +27,10 @@ export const teamRouter = router({
      * Includes both active users and pending invitations
      */
     getMembers: adminProcedure.query(async ({ ctx }) => {
-        // Get all users in the tenant
+        // Get all users in the tenant (except clients)
         const { data: users, error: usersError } = await ctx.supabase
             .from('users')
-            .select('id, full_name, email_verified, role, created_at')
+            .select('id, full_name, email_verified, roles, created_at')
             .order('created_at', { ascending: false });
 
         if (usersError) {
@@ -37,7 +44,7 @@ export const teamRouter = router({
         // Get pending invitations
         const { data: invitations, error: invitationsError } = await ctx.supabase
             .from('team_invitations')
-            .select('id, email, status, created_at, expires_at')
+            .select('id, email, roles, status, created_at, expires_at')
             .eq('status', 'pending')
             .order('created_at', { ascending: false });
 
@@ -52,9 +59,9 @@ export const teamRouter = router({
         // Transform to unified list
         const members = users?.map(user => ({
             id: user.id,
-            email: null, // We don't have email in users table, need to get from auth
+            email: null, // Need auth.users for email
             name: user.full_name,
-            role: user.role,
+            roles: user.roles as Role[],
             status: 'active' as const,
             invitedAt: null,
             joinedAt: user.created_at,
@@ -64,7 +71,7 @@ export const teamRouter = router({
             id: inv.id,
             email: inv.email,
             name: null,
-            role: 'staff',
+            roles: (inv.roles as Role[]) || ['provider'],
             status: 'invited' as const,
             invitedAt: inv.created_at,
             joinedAt: null,
@@ -80,16 +87,15 @@ export const teamRouter = router({
 
     /**
      * Send an invitation to a new team member
+     * Supports multiple roles
      */
     invite: adminProcedure
         .input(z.object({
             email: z.string().email('Invalid email address'),
+            roles: z.array(z.enum(validRoles)).min(1, 'At least one role required'),
         }))
         .mutation(async ({ ctx, input }) => {
-            const { email } = input;
-
-            // Check if user already exists with this email in this tenant
-            // (We'd need to check auth.users, but that requires service role)
+            const { email, roles } = input;
 
             // Check if there's already a pending invitation
             const { data: existingInvite } = await ctx.supabase
@@ -109,15 +115,16 @@ export const teamRouter = router({
             // Generate invitation token
             const token = generateToken();
 
-            // Create the invitation
+            // Create the invitation with roles
             const { data: invitation, error } = await ctx.supabase
                 .from('team_invitations')
                 .insert({
                     tenant_id: ctx.tenantId,
                     email,
+                    roles, // Store roles array
                     token,
                     invited_by: ctx.userId,
-                    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+                    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
                 })
                 .select()
                 .single();
@@ -131,7 +138,6 @@ export const teamRouter = router({
             }
 
             // TODO: Send email with invitation link
-            // For now, we'll return the token (in production, this would be emailed)
             const inviteUrl = `/auth/accept-invite?token=${token}`;
 
             return {
@@ -139,9 +145,9 @@ export const teamRouter = router({
                 invitation: {
                     id: invitation.id,
                     email: invitation.email,
+                    roles: invitation.roles,
                     expiresAt: invitation.expires_at,
                 },
-                // In production, remove this - just for testing
                 inviteUrl,
             };
         }),
@@ -154,7 +160,6 @@ export const teamRouter = router({
             invitationId: z.string().uuid(),
         }))
         .mutation(async ({ ctx, input }) => {
-            // Generate new token and extend expiry
             const token = generateToken();
             const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -177,7 +182,6 @@ export const teamRouter = router({
                 });
             }
 
-            // TODO: Resend email
             const inviteUrl = `/auth/accept-invite?token=${token}`;
 
             return {
@@ -221,7 +225,7 @@ export const teamRouter = router({
         .query(async ({ ctx, input }) => {
             const { data: invitation, error } = await ctx.supabase
                 .from('team_invitations')
-                .select('id, email, tenant_id, status, expires_at')
+                .select('id, email, tenant_id, roles, status, expires_at')
                 .eq('token', input.token)
                 .single();
 
@@ -241,50 +245,95 @@ export const teamRouter = router({
                 valid: true,
                 email: invitation.email,
                 tenantId: invitation.tenant_id,
+                roles: invitation.roles as Role[],
             };
         }),
 
     /**
-     * Story 2.5: Promote a team member to Admin role
+     * Update a user's roles
+     * Can add or remove roles
      */
-    promoteToAdmin: adminProcedure
+    updateRoles: adminProcedure
         .input(z.object({
             userId: z.string().uuid(),
+            roles: z.array(z.enum(validRoles)).min(1, 'User must have at least one role'),
         }))
         .mutation(async ({ ctx, input }) => {
+            const { userId, roles } = input;
+
+            // Can't modify your own roles
+            if (userId === ctx.userId) {
+                throw new TRPCError({
+                    code: 'FORBIDDEN',
+                    message: 'Cannot modify your own roles',
+                });
+            }
+
+            // Update user roles
             const { error } = await ctx.supabase
                 .from('users')
                 .update({
-                    role: 'admin',
+                    roles,
                     updated_at: new Date().toISOString(),
                 })
-                .eq('id', input.userId);
+                .eq('id', userId);
 
             if (error) {
                 throw new TRPCError({
                     code: 'INTERNAL_SERVER_ERROR',
-                    message: 'Failed to promote user to admin',
+                    message: 'Failed to update user roles',
                     cause: error,
                 });
             }
 
-            return { success: true };
+            // If adding 'provider' role, create provider_profile if not exists
+            if (roles.includes('provider')) {
+                const { data: existingProfile } = await ctx.supabase
+                    .from('provider_profiles')
+                    .select('user_id')
+                    .eq('user_id', userId)
+                    .single();
+
+                if (!existingProfile) {
+                    // Get user info for profile
+                    const { data: user } = await ctx.supabase
+                        .from('users')
+                        .select('full_name, tenant_id')
+                        .eq('id', userId)
+                        .single();
+
+                    if (user) {
+                        await ctx.supabase
+                            .from('provider_profiles')
+                            .insert({
+                                user_id: userId,
+                                tenant_id: user.tenant_id,
+                                name: user.full_name || 'Provider',
+                                is_active: true,
+                            });
+                    }
+                }
+            }
+
+            return { success: true, roles };
         }),
 
     /**
-     * Story 2.5: Make a team member a Provider
-     * Creates a Provider Profile for them
+     * Add a role to a user
      */
-    makeProvider: adminProcedure
+    addRole: adminProcedure
         .input(z.object({
             userId: z.string().uuid(),
+            role: z.enum(validRoles),
         }))
         .mutation(async ({ ctx, input }) => {
-            // Get user details
+            const { userId, role } = input;
+
+            // Get current roles
             const { data: user, error: userError } = await ctx.supabase
                 .from('users')
-                .select('id, full_name')
-                .eq('id', input.userId)
+                .select('roles')
+                .eq('id', userId)
                 .single();
 
             if (userError || !user) {
@@ -294,50 +343,127 @@ export const teamRouter = router({
                 });
             }
 
-            // Check if provider already exists
-            const { data: existingProvider } = await ctx.supabase
-                .from('providers')
-                .select('id')
-                .eq('user_id', input.userId)
-                .single();
-
-            if (existingProvider) {
-                throw new TRPCError({
-                    code: 'CONFLICT',
-                    message: 'User is already a provider',
-                });
+            const currentRoles = (user.roles as Role[]) || [];
+            if (currentRoles.includes(role)) {
+                return { success: true, roles: currentRoles }; // Already has role
             }
 
-            // Create provider record
-            const { data: provider, error: providerError } = await ctx.supabase
-                .from('providers')
-                .insert({
-                    tenant_id: ctx.tenantId,
-                    user_id: input.userId,
-                    name: user.full_name || 'Provider',
-                    is_active: true,
-                })
-                .select()
-                .single();
+            const newRoles = [...currentRoles, role];
 
-            if (providerError) {
-                throw new TRPCError({
-                    code: 'INTERNAL_SERVER_ERROR',
-                    message: 'Failed to create provider profile',
-                    cause: providerError,
-                });
-            }
-
-            // Update user role to provider
-            await ctx.supabase
+            // Update using updateRoles logic
+            const { error } = await ctx.supabase
                 .from('users')
                 .update({
-                    role: 'provider',
+                    roles: newRoles,
                     updated_at: new Date().toISOString(),
                 })
-                .eq('id', input.userId);
+                .eq('id', userId);
 
-            return { success: true, providerId: provider.id };
+            if (error) {
+                throw new TRPCError({
+                    code: 'INTERNAL_SERVER_ERROR',
+                    message: 'Failed to add role',
+                    cause: error,
+                });
+            }
+
+            // Create provider profile if adding provider role
+            if (role === 'provider') {
+                const { data: existingProfile } = await ctx.supabase
+                    .from('provider_profiles')
+                    .select('user_id')
+                    .eq('user_id', userId)
+                    .single();
+
+                if (!existingProfile) {
+                    const { data: userData } = await ctx.supabase
+                        .from('users')
+                        .select('full_name, tenant_id')
+                        .eq('id', userId)
+                        .single();
+
+                    if (userData) {
+                        await ctx.supabase.from('provider_profiles').insert({
+                            user_id: userId,
+                            tenant_id: userData.tenant_id,
+                            name: userData.full_name || 'Provider',
+                            is_active: true,
+                        });
+                    }
+                }
+            }
+
+            return { success: true, roles: newRoles };
+        }),
+
+    /**
+     * Remove a role from a user
+     */
+    removeRole: adminProcedure
+        .input(z.object({
+            userId: z.string().uuid(),
+            role: z.enum(validRoles),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            const { userId, role } = input;
+
+            // Can't modify your own roles
+            if (userId === ctx.userId) {
+                throw new TRPCError({
+                    code: 'FORBIDDEN',
+                    message: 'Cannot modify your own roles',
+                });
+            }
+
+            // Get current roles
+            const { data: user, error: userError } = await ctx.supabase
+                .from('users')
+                .select('roles')
+                .eq('id', userId)
+                .single();
+
+            if (userError || !user) {
+                throw new TRPCError({
+                    code: 'NOT_FOUND',
+                    message: 'User not found',
+                });
+            }
+
+            const currentRoles = (user.roles as Role[]) || [];
+            const newRoles = currentRoles.filter(r => r !== role);
+
+            if (newRoles.length === 0) {
+                throw new TRPCError({
+                    code: 'BAD_REQUEST',
+                    message: 'User must have at least one role',
+                });
+            }
+
+            const { error } = await ctx.supabase
+                .from('users')
+                .update({
+                    roles: newRoles,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('id', userId);
+
+            if (error) {
+                throw new TRPCError({
+                    code: 'INTERNAL_SERVER_ERROR',
+                    message: 'Failed to remove role',
+                    cause: error,
+                });
+            }
+
+            // If removing provider role, deactivate provider profile
+            if (role === 'provider') {
+                await ctx.supabase
+                    .from('provider_profiles')
+                    .update({ is_active: false })
+                    .eq('user_id', userId);
+            }
+
+            return { success: true, roles: newRoles };
         }),
 });
 
