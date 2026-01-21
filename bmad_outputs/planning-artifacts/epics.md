@@ -990,7 +990,7 @@ So that **clients only see truly bookable times** (FR6-FR8).
 
 ---
 
-### Story 2.8: Admin Dashboard & Navigation Shell
+### Story 2.8: Admin Dashboard & Navigation Shell ✅ DONE
 
 As an **admin**,
 I want **a persistent navigation sidebar**,
