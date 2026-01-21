@@ -514,7 +514,7 @@ export type Database = {
           full_name: string | null
           id: string
           phone: string | null
-          phone: string | null
+
           roles: string[] | null
           tenant_id: string
           updated_at: string | null
