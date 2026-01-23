@@ -101,7 +101,8 @@ export const teamRouter = router({
             placeholderProviderId: z.string().uuid().optional(),
         }))
         .mutation(async ({ ctx, input }) => {
-            const { email, roles, permissions, placeholderProviderId } = input;
+            const { roles, permissions, placeholderProviderId } = input;
+            const email = input.email.toLowerCase();
 
             // Check if there's already a pending invitation
             const { data: existingInvite } = await ctx.supabase
