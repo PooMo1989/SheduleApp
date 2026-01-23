@@ -12,6 +12,7 @@ const publicRoutes = [
     '/forgot-password',
     '/reset-password',
     '/auth/callback',
+    '/auth/accept-invite',  // Story 2.4.4: Invitation acceptance page
     '/api',  // All API routes - tRPC handles its own auth via protected procedures
 ];
 
