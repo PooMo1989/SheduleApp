@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { Json } from '@/types/database.types';
 import { resend } from '@/lib/email';
 import { getInvitationEmail } from '@/lib/email/templates/invitation';
+import { env } from '@/env';
 import { router, adminProcedure, protectedProcedure } from '@/lib/trpc/server';
 import { TRPCError } from '@trpc/server';
 import crypto from 'crypto';
@@ -158,7 +159,7 @@ export const teamRouter = router({
                 .single();
 
             // Send email with invitation link
-            const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+            const baseUrl = env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
             const fullInviteUrl = `${baseUrl}/auth/accept-invite?token=${token}`;
 
             const { subject, html } = getInvitationEmail({
@@ -171,7 +172,7 @@ export const teamRouter = router({
             // Send via Resend (fire and forget to avoid blocking, or await to catch error?)
             // We await to ensure delivery starts, but catch errors to not fail the transaction
             try {
-                if (process.env.RESEND_API_KEY) {
+                if (env.RESEND_API_KEY) {
                     await resend.emails.send({
                         from: 'ScheduleApp <team@shedule.life>',
                         to: email,
