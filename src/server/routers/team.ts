@@ -3,7 +3,7 @@ import { Json } from '@/types/database.types';
 import { resend } from '@/lib/email';
 import { getInvitationEmail } from '@/lib/email/templates/invitation';
 import { env } from '@/env';
-import { router, adminProcedure, protectedProcedure } from '@/lib/trpc/server';
+import { router, adminProcedure, protectedProcedure, publicProcedure } from '@/lib/trpc/server';
 import { TRPCError } from '@trpc/server';
 import crypto from 'crypto';
 
@@ -514,6 +514,149 @@ export const teamRouter = router({
             }
 
             return { success: true, roles: newRoles };
+        }),
+
+    /**
+     * Validate an invitation token (PUBLIC - for signup flow)
+     * Story 2.4.4: Invitation Acceptance Flow
+     */
+    validateInvite: publicProcedure
+        .input(z.object({
+            token: z.string().min(1),
+        }))
+        .query(async ({ ctx, input }) => {
+            const { data: invitation, error } = await ctx.supabase
+                .from('team_invitations')
+                .select(`
+                    id,
+                    email,
+                    roles,
+                    status,
+                    expires_at,
+                    tenant_id,
+                    tenants!inner(name)
+                `)
+                .eq('token', input.token)
+                .eq('status', 'pending')
+                .single();
+
+            if (error || !invitation) {
+                throw new TRPCError({
+                    code: 'NOT_FOUND',
+                    message: 'Invalid or expired invitation link',
+                });
+            }
+
+            // Check expiration
+            if (new Date(invitation.expires_at) < new Date()) {
+                throw new TRPCError({
+                    code: 'BAD_REQUEST',
+                    message: 'This invitation has expired',
+                });
+            }
+
+            const tenantData = invitation.tenants as unknown as { name: string };
+
+            return {
+                valid: true,
+                email: invitation.email,
+                roles: invitation.roles as Role[],
+                tenantName: tenantData?.name || 'Organization',
+                tenantId: invitation.tenant_id,
+            };
+        }),
+
+    /**
+     * Accept an invitation and create account (PUBLIC)
+     * Story 2.4.4: Invitation Acceptance Flow
+     */
+    acceptInvite: publicProcedure
+        .input(z.object({
+            token: z.string().min(1),
+            password: z.string().min(8, 'Password must be at least 8 characters'),
+            fullName: z.string().min(1, 'Name is required'),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            // First validate the token
+            const { data: invitation, error: inviteError } = await ctx.supabase
+                .from('team_invitations')
+                .select('id, email, roles, status, expires_at, tenant_id')
+                .eq('token', input.token)
+                .eq('status', 'pending')
+                .single();
+
+            if (inviteError || !invitation) {
+                throw new TRPCError({
+                    code: 'NOT_FOUND',
+                    message: 'Invalid or expired invitation link',
+                });
+            }
+
+            if (new Date(invitation.expires_at) < new Date()) {
+                throw new TRPCError({
+                    code: 'BAD_REQUEST',
+                    message: 'This invitation has expired',
+                });
+            }
+
+            // Create user in Supabase Auth
+            const { data: authData, error: authError } = await ctx.supabase.auth.signUp({
+                email: invitation.email,
+                password: input.password,
+                options: {
+                    data: {
+                        full_name: input.fullName,
+                        tenant_id: invitation.tenant_id,
+                    },
+                },
+            });
+
+            if (authError || !authData.user) {
+                throw new TRPCError({
+                    code: 'INTERNAL_SERVER_ERROR',
+                    message: authError?.message || 'Failed to create account',
+                });
+            }
+
+            // Create user record in users table
+            const { error: userError } = await ctx.supabase
+                .from('users')
+                .insert({
+                    id: authData.user.id,
+                    tenant_id: invitation.tenant_id,
+                    full_name: input.fullName,
+                    roles: invitation.roles,
+                    email_verified: true,
+                });
+
+            if (userError) {
+                console.error('Failed to create user record:', userError);
+                // Don't throw - auth user exists, they can still login
+            }
+
+            // If user has provider role, create provider profile
+            const roles = invitation.roles as Role[];
+            if (roles.includes('provider')) {
+                await ctx.supabase
+                    .from('providers')
+                    .insert({
+                        user_id: authData.user.id,
+                        tenant_id: invitation.tenant_id,
+                        name: input.fullName,
+                        is_active: true,
+                    });
+            }
+
+            // Mark invitation as accepted
+            await ctx.supabase
+                .from('team_invitations')
+                .update({ status: 'accepted' })
+                .eq('id', invitation.id);
+
+            return {
+                success: true,
+                message: 'Account created successfully. Please sign in.',
+            };
         }),
 });
 
