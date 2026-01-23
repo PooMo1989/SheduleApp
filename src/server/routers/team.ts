@@ -173,7 +173,7 @@ export const teamRouter = router({
             try {
                 if (process.env.RESEND_API_KEY) {
                     await resend.emails.send({
-                        from: 'ScheduleApp <onboarding@resend.dev>',
+                        from: 'ScheduleApp <team@shedule.life>',
                         to: email,
                         subject,
                         html,
