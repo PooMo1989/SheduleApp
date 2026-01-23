@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { Json } from '@/types/database.types';
+import { resend } from '@/lib/email';
+import { getInvitationEmail } from '@/lib/email/templates/invitation';
 import { router, adminProcedure, protectedProcedure } from '@/lib/trpc/server';
 import { TRPCError } from '@trpc/server';
 import crypto from 'crypto';
@@ -142,7 +144,49 @@ export const teamRouter = router({
                 });
             }
 
-            // TODO: Send email with invitation link
+            // Fetch tenant and inviter details for email
+            const { data: tenant } = await ctx.supabase
+                .from('tenants')
+                .select('name')
+                .eq('id', ctx.tenantId)
+                .single();
+
+            const { data: inviter } = await ctx.supabase
+                .from('users')
+                .select('full_name')
+                .eq('id', ctx.userId)
+                .single();
+
+            // Send email with invitation link
+            const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+            const fullInviteUrl = `${baseUrl}/auth/accept-invite?token=${token}`;
+
+            const { subject, html } = getInvitationEmail({
+                inviteUrl: fullInviteUrl,
+                inviterName: inviter?.full_name || 'An admin',
+                organizationName: tenant?.name || 'ScheduleApp',
+                role: roles.map(r => r.charAt(0).toUpperCase() + r.slice(1)).join('/'),
+            });
+
+            // Send via Resend (fire and forget to avoid blocking, or await to catch error?)
+            // We await to ensure delivery starts, but catch errors to not fail the transaction
+            try {
+                if (process.env.RESEND_API_KEY) {
+                    await resend.emails.send({
+                        from: 'ScheduleApp <onboarding@resend.dev>',
+                        to: email,
+                        subject,
+                        html,
+                    });
+                } else {
+                    console.log('Skipping email: RESEND_API_KEY not set');
+                    console.log('Invite Link:', fullInviteUrl);
+                }
+            } catch (emailError) {
+                console.error('Failed to send invitation email:', emailError);
+                // We don't throw - user can use the link or resend
+            }
+
             const inviteUrl = `/auth/accept-invite?token=${token}`;
 
             return {
