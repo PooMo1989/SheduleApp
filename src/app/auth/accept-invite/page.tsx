@@ -94,6 +94,14 @@ function AcceptInviteContent() {
             token,
             fullName: data.fullName,
             password: data.password,
+        }, {
+            onError: (err) => {
+                if (err.message.includes('already registered') || err.message.includes('already exists')) {
+                    setError('User already registered');
+                } else {
+                    setError(err.message);
+                }
+            }
         });
     };
 
@@ -136,6 +144,29 @@ function AcceptInviteContent() {
                             className="mt-4 text-teal-600 hover:text-teal-700 font-medium"
                         >
                             Go to Login
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Existing User Error State
+    if (error === 'User already registered') {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+                <div className="max-w-md w-full text-center">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                        <div className="text-blue-600 text-4xl mb-4">ℹ️</div>
+                        <h1 className="text-xl font-bold text-blue-900 mb-2">Account Already Exists</h1>
+                        <p className="text-blue-700 mb-6">
+                            You already have an account with this email address. Please sign in to access your dashboard.
+                        </p>
+                        <button
+                            onClick={() => router.push('/login')}
+                            className="w-full py-3 px-4 bg-teal-600 text-white font-medium rounded-lg hover:bg-teal-700 transition-colors"
+                        >
+                            Sign In
                         </button>
                     </div>
                 </div>

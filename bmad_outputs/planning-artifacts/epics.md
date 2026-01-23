@@ -214,6 +214,28 @@ This document provides the complete epic and story breakdown for sheduleApp, dec
 
 ---
 
+### Story 2.7: Unified Sign-Up UX
+**Goal:** Ensure every sign-up point (Admin, Provider Invite, Client Checkout) gracefully handles "User already exists" by offering a clear "Sign In" option.
+
+**User Outcome:** Users who forget they have an account aren't blocked by confusing errors; they are guided to log in.
+
+**Acceptance Criteria:**
+**Given** a user with an existing account
+**When** they try to sign up via Invitation Link
+**Then** they see "You already have an account. Please sign in."
+**And** a "Sign In" button is displayed
+
+**Given** a user with an existing account
+**When** they try to sign up via Register Page
+**Then** they see "You already have an account. Please sign in."
+**And** they can easily switch to login
+
+**Given** a client in checkout (TBD)
+**When** they try to create an account with existing email
+**Then** they are guided to sign in without losing their booking flow
+
+---
+
 ### Epic 3: Embeddable Booking Widget
 **Goal:** Business websites can embed a booking calendar widget that shows provider availability and accepts bookings.
 

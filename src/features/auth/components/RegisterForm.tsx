@@ -57,7 +57,7 @@ export function RegisterForm() {
             if (authError) {
                 if (authError.message.includes('already registered') ||
                     authError.message.includes('already exists')) {
-                    setError('Email already registered. Please login instead.');
+                    setError('EMAIL_EXISTS');
                 } else {
                     setError(authError.message);
                 }
@@ -91,8 +91,21 @@ export function RegisterForm() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Error Message */}
             {error && (
-                <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-sm">
-                    {error}
+                <div className={`p-3 rounded-md text-sm ${error === 'EMAIL_EXISTS'
+                    ? 'bg-blue-50 border border-blue-200 text-blue-700'
+                    : 'bg-red-50 border border-red-200 text-red-600'
+                    }`}>
+                    {error === 'EMAIL_EXISTS' ? (
+                        <>
+                            <strong>Account Already Exists</strong>
+                            <p className="mt-1">
+                                You already have an account with this email. Please{' '}
+                                <a href="/login" className="font-medium underline hover:text-blue-800">sign in</a>.
+                            </p>
+                        </>
+                    ) : (
+                        error
+                    )}
                 </div>
             )}
 
