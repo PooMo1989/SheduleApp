@@ -3,16 +3,20 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { trpc } from '@/lib/trpc/client';
+import { UserPermissions } from '@/lib/utils/permissions';
 
 interface InviteFormData {
     email: string;
     isAdmin: boolean;
     isProvider: boolean;
+    canManageServices: boolean;
+    canViewAllBookings: boolean;
 }
 
 /**
  * Invite Form Component
  * Story 2.4 + 2.4.1: Form to invite team members with role selection
+ * Story 2.5.2: Granular permissions
  */
 export function InviteForm() {
     const [showSuccess, setShowSuccess] = useState(false);
@@ -42,6 +46,8 @@ export function InviteForm() {
         defaultValues: {
             isAdmin: false,
             isProvider: true, // Default to provider
+            canManageServices: false,
+            canViewAllBookings: false,
         },
     });
 
@@ -59,7 +65,21 @@ export function InviteForm() {
             return; // Validation will show error
         }
 
-        invite.mutate({ email: data.email, roles });
+        // Build permissions object
+        const permissions: UserPermissions = {};
+
+        // If admin, they have everything typically
+        // If not admin, we set explicit permissions
+        if (!data.isAdmin) {
+            if (data.canManageServices) {
+                permissions.services = { view: true, add: true, edit: true };
+            }
+            if (data.canViewAllBookings) {
+                permissions.bookings = { view: true };
+            }
+        }
+
+        invite.mutate({ email: data.email, roles, permissions });
     };
 
     const noRoleSelected = !isAdmin && !isProvider;
@@ -125,6 +145,35 @@ export function InviteForm() {
                         <p className="mt-1 text-sm text-red-600">Select at least one role</p>
                     )}
                 </div>
+
+                {/* Permissions Selection (Only show if Provider selected AND not Admin) */}
+                {isProvider && !isAdmin && (
+                    <div className="pl-6 border-l-2 border-gray-100 space-y-2">
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+                            Provider Permissions
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                                {...register('canManageServices')}
+                                type="checkbox"
+                                className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500"
+                            />
+                            <span className="text-sm text-gray-700">
+                                Manage Services (Add/Edit)
+                            </span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                                {...register('canViewAllBookings')}
+                                type="checkbox"
+                                className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500"
+                            />
+                            <span className="text-sm text-gray-700">
+                                View All Bookings (Not just own)
+                            </span>
+                        </label>
+                    </div>
+                )}
 
                 {/* Error Display */}
                 {invite.error && (

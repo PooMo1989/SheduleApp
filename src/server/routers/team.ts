@@ -93,9 +93,11 @@ export const teamRouter = router({
         .input(z.object({
             email: z.string().email('Invalid email address'),
             roles: z.array(z.enum(validRoles)).min(1, 'At least one role required'),
+            permissions: z.record(z.any()).optional(),
+            placeholderProviderId: z.string().uuid().optional(),
         }))
         .mutation(async ({ ctx, input }) => {
-            const { email, roles } = input;
+            const { email, roles, permissions, placeholderProviderId } = input;
 
             // Check if there's already a pending invitation
             const { data: existingInvite } = await ctx.supabase
@@ -115,13 +117,15 @@ export const teamRouter = router({
             // Generate invitation token
             const token = generateToken();
 
-            // Create the invitation with roles
+            // Create the invitation with roles and permissions
             const { data: invitation, error } = await ctx.supabase
                 .from('team_invitations')
                 .insert({
                     tenant_id: ctx.tenantId,
                     email,
                     roles, // Store roles array
+                    default_permissions: permissions || {}, // Store permissions
+                    placeholder_provider_id: placeholderProviderId,
                     token,
                     invited_by: ctx.userId,
                     expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),

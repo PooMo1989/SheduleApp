@@ -883,7 +883,7 @@ So that **they can perform their duties or be booked for services**.
 
 ---
 
-### Story 2.5.1: File Upload Infrastructure (Supabase Storage)
+### Story 2.5.1: File Upload Infrastructure (Supabase Storage) ✅ DONE
 
 As a **developer**,
 I want **a file upload system using Supabase Storage with S3-compatible patterns**,
@@ -1007,6 +1007,21 @@ So that **clients only see truly bookable times** (FR6-FR8).
 **Then** the system returns cached availability with warning (NFR16)
 **And** response time remains < 500ms (NFR2)
 
+**Schema Prerequisites (Migration):**
+Before implementing this story, add to `services` table:
+- `min_notice_hours INTEGER DEFAULT 24` - How far ahead clients must book
+- `max_future_days INTEGER DEFAULT 60` - How far into future clients can book
+- `payment_requirement TEXT DEFAULT 'OPTIONAL'` - FULL / OPTIONAL / NONE
+
+**Booking Rule Validation:**
+**Given** a service has `min_notice_hours: 24`
+**When** a client tries to book a slot 2 hours from now
+**Then** the slot is NOT returned (fails Layer 1)
+
+**Given** a service has `max_future_days: 60`
+**When** a client views dates 90 days in the future
+**Then** those dates are greyed out / not selectable
+
 ---
 
 ### Story 2.8: Admin Dashboard & Navigation Shell ✅ DONE
@@ -1033,6 +1048,127 @@ So that **I can access all management modules from one place**.
 **Then** the sidebar is collapsible (hamburger menu)
 
 ---
+---
+
+### Story 2.5.2: Permissions Schema & Team Enhancement ✅ DONE
+
+As a **developer**,
+I want **granular permissions stored on users and enhanced team invitations**,
+So that **admins can control what each team member can access**.
+
+**Schema Migration:**
+```sql
+-- Add permissions to users
+ALTER TABLE public.users 
+  ADD COLUMN IF NOT EXISTS permissions JSONB DEFAULT '{}'::jsonb;
+
+-- Add placeholder linking to team_invitations
+ALTER TABLE public.team_invitations 
+  ADD COLUMN IF NOT EXISTS placeholder_provider_id UUID REFERENCES provider_profiles(user_id),
+  ADD COLUMN IF NOT EXISTS default_permissions JSONB DEFAULT '{}'::jsonb;
+```
+
+**Default Permissions Structure:**
+```json
+{
+  "services": { "add": true, "edit": true },
+  "providers": { "add": true, "edit": true },
+  "bookings": { "manage": true },
+  "team": { "add": false, "edit": false },
+  "payments": { "view": false, "refund": false, "settings": false },
+  "company": { "edit": false }
+}
+```
+
+**Acceptance Criteria:**
+
+**Given** a team invitation is sent
+**When** the admin selects permissions
+**Then** `default_permissions` is stored on the invitation
+
+**Given** the invitee accepts
+**When** their user record is created
+**Then** `users.permissions` is populated from invitation defaults
+
+**Given** an admin is logged in
+**When** they check permission for an action
+**Then** utility function `hasPermission(user, 'services.edit')` returns boolean
+
+---
+
+### Story 2.7.1: Provider Availability Editor UI
+
+As an **admin or provider**,
+I want **a visual weekly schedule builder**,
+So that **I can set recurring availability with drag-to-select**.
+
+**Acceptance Criteria:**
+
+**Given** I am on the provider's Schedule tab
+**When** the page loads
+**Then** I see a weekly grid (Mon-Sun, 7am-9pm)
+**And** existing time blocks are highlighted
+**And** I can drag to create new time blocks
+**And** I can click a block to edit or delete it
+
+**Given** I need to set split shifts
+**When** I create two blocks on the same day (e.g., 9-12, 14-17)
+**Then** both blocks are saved separately
+**And** availability respects the gap (12-14 is unavailable)
+
+**Given** I need to set a date-specific override
+**When** I click "Add Override"
+**Then** I see a date picker + time range + reason field
+**And** overrides are displayed with a different color
+
+**Given** the provider has Google Calendar connected
+**When** I view the schedule
+**Then** I see a notice "Google Calendar conflicts will block these times"
+
+**UI Reference:** Follow Calendly's availability editor pattern.
+
+---
+
+### Story 2.9: Responsive UI Patterns (Calendly-Style)
+
+As a **user on any device**,
+I want **consistent responsive behavior across all admin screens**,
+So that **I can manage bookings effectively on mobile**.
+
+**Acceptance Criteria:**
+
+**Desktop Behavior (≥1024px):**
+**Given** I am on a list page (Team, Providers, Services)
+**When** I click an item
+**Then** a detail panel slides in from the right
+**And** the list remains visible on the left
+**And** the sidebar stays expanded
+
+**Tablet Behavior (768px-1023px):**
+**Given** I am on a list page
+**When** I click an item
+**Then** the detail panel takes more width
+**And** the list compresses or hides
+**And** sidebar collapses to icons only
+
+**Mobile Behavior (<768px):**
+**Given** I am on any admin page
+**When** the page loads
+**Then** the sidebar is a hamburger menu (top-left)
+**And** lists are full-screen
+**And** clicking an item navigates to a full-screen detail view
+**And** an X button (top-right) returns to the list
+
+**Tabbed Detail Views:**
+**Given** I am viewing a single item (Provider, Service, Team Member)
+**When** the detail loads
+**Then** I see horizontal tabs at the top:
+- Provider: Details | Services | Schedule | Appointments
+- Team Member: Details | Permissions | Activity
+- Service: Basics | Booking Rules | Providers
+
+**UI Reference:** Study Calendly's mobile app and admin panel for exact patterns.
+
 ---
 
 ## Epic 3: Embeddable Booking Widget
