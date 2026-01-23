@@ -1,5 +1,5 @@
 
-import { Database, Json } from '@/types/database.types';
+import { Json } from '@/types/database.types';
 
 type UserData = {
     roles: string[] | null;

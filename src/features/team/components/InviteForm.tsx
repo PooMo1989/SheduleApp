@@ -79,7 +79,7 @@ export function InviteForm() {
             }
         }
 
-        invite.mutate({ email: data.email, roles, permissions });
+        invite.mutate({ email: data.email, roles, permissions: permissions as any });
     };
 
     const noRoleSelected = !isAdmin && !isProvider;

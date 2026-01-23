@@ -93,7 +93,7 @@ export const teamRouter = router({
         .input(z.object({
             email: z.string().email('Invalid email address'),
             roles: z.array(z.enum(validRoles)).min(1, 'At least one role required'),
-            permissions: z.record(z.any()).optional(),
+            permissions: z.record(z.string(), z.any()).optional(),
             placeholderProviderId: z.string().uuid().optional(),
         }))
         .mutation(async ({ ctx, input }) => {
@@ -124,8 +124,8 @@ export const teamRouter = router({
                     tenant_id: ctx.tenantId,
                     email,
                     roles, // Store roles array
-                    default_permissions: permissions || {}, // Store permissions
-                    placeholder_provider_id: placeholderProviderId,
+                    default_permissions: (permissions || {}) as any, // Store permissions (cast to any to satisfy Json type)
+                    placeholder_provider_id: placeholderProviderId ?? null,
                     token,
                     invited_by: ctx.userId,
                     expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
