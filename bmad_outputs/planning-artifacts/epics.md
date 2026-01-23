@@ -1094,6 +1094,22 @@ ALTER TABLE public.team_invitations
 **When** they check permission for an action
 **Then** utility function `hasPermission(user, 'services.edit')` returns boolean
 
+
+---
+
+### Story 2.4.3: Email Integration (Resend) ✅ DONE
+
+As an **admin**,
+I want **invitations to send real emails**,
+So that **team members can join easily**.
+
+**Acceptance Criteria:**
+**Given** I invite a user
+**When** I switch on `RESEND_API_KEY`
+**Then** an email is sent to the user via Resend
+**And** the email contains a direct link to accept
+**And** the email comes from `team@shedule.life` (Verified Domain)
+
 ---
 
 ### Story 2.7.1: Provider Availability Editor UI
