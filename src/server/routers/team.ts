@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Json } from '@/types/database.types';
 import { router, adminProcedure, protectedProcedure } from '@/lib/trpc/server';
 import { TRPCError } from '@trpc/server';
 import crypto from 'crypto';
@@ -124,7 +125,7 @@ export const teamRouter = router({
                     tenant_id: ctx.tenantId,
                     email,
                     roles, // Store roles array
-                    default_permissions: (permissions || {}) as any, // Store permissions (cast to any to satisfy Json type)
+                    default_permissions: (permissions || {}) as unknown as Json, // Store permissions (cast to Json)
                     placeholder_provider_id: placeholderProviderId ?? null,
                     token,
                     invited_by: ctx.userId,

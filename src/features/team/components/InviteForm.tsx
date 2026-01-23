@@ -79,6 +79,7 @@ export function InviteForm() {
             }
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         invite.mutate({ email: data.email, roles, permissions: permissions as any });
     };
 
