@@ -519,6 +519,10 @@ Priya only sees slots that are **truly bookable**. No frustration from unavailab
 - **FR56**: Providers can only see their own data (not other providers')
 - **FR57**: System enforces tenant data isolation (for SaaS)
 
+### 11.1 Future Team Management (Phase 3/4)
+- **Note:** In future phases (HR/Payroll), a `team_profiles` table will be introduced to store sensitive employee data (salary, contracts, address) for both Admins and Providers.
+- **Decision:** For MVP, Admin data resides in `users` table only; Providers use `provider_profiles` for public booking info.
+
 ### 12. Modular Architecture
 
 - **FR58**: System supports modular design (Consultations module, Classes module)

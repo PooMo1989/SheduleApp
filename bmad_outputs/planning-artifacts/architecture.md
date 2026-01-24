@@ -591,6 +591,7 @@ sheduleapp/
 - All database queries filtered by `tenant_id` via RLS
 - Tenant context set in middleware from subdomain/slug
 - No direct table access from components (always via tRPC)
+- **Admin Impersonation Exception:** Admins can read Provider-scoped data (schedule, appointments) via specific `admin.impersonate` procedures, but **RLS must strictly block access to `client_notes`** for non-authors (unless Owner).
 
 ### Requirements to Structure Mapping
 
@@ -602,6 +603,7 @@ sheduleapp/
 | **Provider (FR21-30)** | `provider.ts` | `features/provider/` | `providers`, `provider_calendars` |
 | **Admin (FR31-45)** | `admin.ts` | `features/admin/` | `tenants`, `users`, `roles` |
 | **Payments (FR46-50)** | `booking.ts` | `features/booking/` | `payments`, `payment_approvals` |
+| **Private Notes (Epic 11)** | `provider.ts` | `features/provider/` | `client_notes` |
 | **Notifications (FR51-55)** | N/A (server service) | `server/services/` | `notification_logs` |
 
 ### External Integration Points

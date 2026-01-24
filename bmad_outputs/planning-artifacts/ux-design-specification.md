@@ -599,6 +599,42 @@ flowchart TD
     B --> H[Reports Sub-Tab]
     H --> I[Date Range Selector]
     I --> J[View: Bookings Count, Revenue, Cancellations]
+
+### J10: Admin Impersonates Provider (New)
+
+```mermaid
+flowchart TD
+    A[Admin Dashboard] --> B[Providers Tab]
+    B --> C[List of Providers]
+    C --> D[Click 'Ravi']
+    D --> E[Provider Dashboard View (Mocked)]
+    E --> F{Select Tab}
+    F -->|Appointments| G[View Ravi's Appointments]
+    F -->|Schedule| H[View/Edit Ravi's Availability]
+    F -->|Clients| I[View Ravi's Client List]
+    I --> J[Click Client Name]
+    J --> K[Client Detail Card]
+    K --> L{Check Notes}
+    L -->|Private Note| M[HIDDEN 🚫]
+    L -->|Public Info| N[Visible ✅]
+```
+
+### J11: Responsive Admin Shell Navigation
+
+```mermaid
+flowchart TD
+    A[Open Admin Page] --> B{Screen Size?}
+    B -->|Desktop >1024px| C[Sidebar Expanded]
+    B -->|Mobile <768px| D[Hamburger Menu]
+    C --> E{Click Team Member}
+    E --> F[Slide-over Pane (Right)]
+    F --> G[List remains visible (Left)]
+    D --> H{Click Team Member}
+    H --> I[Full Screen Push]
+    I --> J[List Hidden]
+    I --> K[See 'Back' Button]
+    K --> L[Return to List]
+```
 ```
 
 ---
