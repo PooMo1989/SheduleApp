@@ -27,7 +27,7 @@ export interface ApiResponse<T> {
 /**
  * User roles for RBAC (Story 1.8)
  */
-export type UserRole = 'admin' | 'provider' | 'client';
+export type UserRole = 'owner' | 'admin' | 'provider' | 'client';
 
 /**
  * Booking status enum

@@ -58,7 +58,7 @@ export function LoginForm() {
 
                 // Redirect based on roles (admin first, then provider)
                 const roles: string[] = userData?.roles || ['client'];
-                if (roles.includes('admin')) {
+                if (roles.includes('owner') || roles.includes('admin')) {
                     router.push('/admin/dashboard');
                 } else if (roles.includes('provider')) {
                     router.push('/provider/dashboard');

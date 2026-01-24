@@ -13,7 +13,7 @@ export interface Context {
     user: User | null;
     userId: string | null;
     tenantId: string | null;
-    roles: ('admin' | 'provider' | 'client')[];
+    roles: ('owner' | 'admin' | 'provider' | 'client')[];
 }
 
 /**
@@ -39,7 +39,7 @@ export async function createContext(): Promise<Context> {
         user,
         userId: user.id,
         tenantId: profile?.tenant_id || null,
-        roles: (profile?.roles as ('admin' | 'provider' | 'client')[]) || ['client'],
+        roles: (profile?.roles as ('owner' | 'admin' | 'provider' | 'client')[]) || ['client'],
     };
 }
 

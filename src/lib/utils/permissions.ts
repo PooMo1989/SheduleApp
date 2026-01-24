@@ -48,8 +48,8 @@ export const hasPermission = (
 
     const roles = user.roles || [];
 
-    // Admins have full access
-    if (roles.includes('admin')) {
+    // Owners and admins have full access
+    if (roles.includes('owner') || roles.includes('admin')) {
         return true;
     }
 

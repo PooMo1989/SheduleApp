@@ -37,7 +37,7 @@ export async function GET(request: Request) {
             const roles: string[] = userData?.roles || ['client'];
             let redirectPath = '/dashboard';
 
-            if (roles.includes('admin')) {
+            if (roles.includes('owner') || roles.includes('admin')) {
                 redirectPath = '/admin/dashboard';
             } else if (roles.includes('provider')) {
                 redirectPath = '/provider/dashboard';

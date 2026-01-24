@@ -79,7 +79,7 @@ export async function middleware(request: NextRequest) {
 
         const roles: string[] = userData?.roles || [];
 
-        if (roles.includes('admin')) return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+        if (roles.includes('owner') || roles.includes('admin')) return NextResponse.redirect(new URL('/admin/dashboard', request.url));
         if (roles.includes('provider')) return NextResponse.redirect(new URL('/provider/dashboard', request.url));
         return NextResponse.redirect(new URL('/dashboard', request.url));
     }
@@ -101,12 +101,12 @@ export async function middleware(request: NextRequest) {
     const roles: string[] = userData?.roles || [];
 
     // Admin routes protection
-    if (pathname.startsWith('/admin') && !roles.includes('admin')) {
+    if (pathname.startsWith('/admin') && !roles.includes('admin') && !roles.includes('owner')) {
         return NextResponse.redirect(new URL('/dashboard?error=access_denied', request.url));
     }
 
     // Provider routes protection
-    if (pathname.startsWith('/provider') && !roles.includes('provider') && !roles.includes('admin')) {
+    if (pathname.startsWith('/provider') && !roles.includes('provider') && !roles.includes('admin') && !roles.includes('owner')) {
         return NextResponse.redirect(new URL('/dashboard?error=access_denied', request.url));
     }
 
