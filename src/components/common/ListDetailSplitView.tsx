@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode } from 'react';
 import { X } from 'lucide-react';
 
 interface ListDetailSplitViewProps {
@@ -10,16 +10,7 @@ interface ListDetailSplitViewProps {
 }
 
 export function ListDetailSplitView({ list, detail, onClose }: ListDetailSplitViewProps) {
-    const [isOpen, setIsOpen] = useState(false);
-
-    useEffect(() => {
-        if (detail) {
-            // Small delay to trigger CSS transition
-            requestAnimationFrame(() => setIsOpen(true));
-        } else {
-            setIsOpen(false);
-        }
-    }, [detail]);
+    const isOpen = !!detail;
 
     return (
         <div className="flex h-full w-full overflow-hidden">
