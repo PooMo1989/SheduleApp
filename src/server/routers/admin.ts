@@ -50,6 +50,19 @@ const updateSettingsSchema = z.object({
     contact_email: z.string().email('Invalid email').nullable().optional(),
     contact_phone: z.string().max(20).nullable().optional(),
     website_url: z.string().url('Invalid URL').nullable().optional(),
+    // Payment fields (Story 2.0.3)
+    bank_name: z.string().max(100).nullable().optional(),
+    bank_account_number: z.string().max(50).nullable().optional(),
+    bank_account_holder: z.string().max(100).nullable().optional(),
+    bank_branch: z.string().max(100).nullable().optional(),
+    pay_later_enabled: z.boolean().optional(),
+    pay_later_mode: z.enum(['auto_confirm', 'pending_approval']).nullable().optional(),
+    // Company config (Story 2.0.3)
+    business_category: z.string().max(100).nullable().optional(),
+    slot_interval_minutes: z.number().refine(
+        (val) => [5, 10, 15, 20, 30, 45, 60].includes(val),
+        'Invalid slot interval'
+    ).optional(),
 });
 
 export type UpdateSettingsInput = z.infer<typeof updateSettingsSchema>;
@@ -79,6 +92,18 @@ export const adminRouter = router({
             });
         }
 
+        // Type assertion for extended fields not in generated types
+        const extendedData = data as typeof data & {
+            bank_name?: string | null;
+            bank_account_number?: string | null;
+            bank_account_holder?: string | null;
+            bank_branch?: string | null;
+            pay_later_enabled?: boolean | null;
+            pay_later_mode?: string | null;
+            business_category?: string | null;
+            slot_interval_minutes?: number | null;
+        };
+
         return {
             id: data.id,
             name: data.name,
@@ -95,6 +120,16 @@ export const adminRouter = router({
             website_url: data.website_url,
             created_at: data.created_at,
             updated_at: data.updated_at,
+            // Payment fields (Story 2.0.3)
+            bank_name: extendedData.bank_name ?? null,
+            bank_account_number: extendedData.bank_account_number ?? null,
+            bank_account_holder: extendedData.bank_account_holder ?? null,
+            bank_branch: extendedData.bank_branch ?? null,
+            pay_later_enabled: extendedData.pay_later_enabled ?? true,
+            pay_later_mode: extendedData.pay_later_mode ?? 'pending_approval',
+            // Company config (Story 2.0.3)
+            business_category: extendedData.business_category ?? null,
+            slot_interval_minutes: extendedData.slot_interval_minutes ?? 15,
         };
     }),
 

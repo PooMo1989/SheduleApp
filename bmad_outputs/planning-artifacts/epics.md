@@ -2633,7 +2633,7 @@ So that **I can manage client relationships and view booking history**.
 
 ---
 
-### Story 2.8.7: Settings Page (Tabbed)
+### Story 2.8.7: Settings Page (Tabbed) ✅ DONE
 
 As an **owner/admin**,
 I want **a unified Settings page with sub-tabs**,

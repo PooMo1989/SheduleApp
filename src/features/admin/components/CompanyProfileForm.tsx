@@ -35,6 +35,8 @@ export function CompanyProfileForm() {
             timezone: settings.timezone || 'Asia/Kolkata',
             currency: settings.currency || 'LKR',
             allow_guest_checkout: settings.allow_guest_checkout ?? true,
+            business_category: settings.business_category || '',
+            slot_interval_minutes: settings.slot_interval_minutes ?? 15,
         } : undefined,
     });
 
@@ -44,6 +46,8 @@ export function CompanyProfileForm() {
         timezone: string;
         currency: string;
         allow_guest_checkout: boolean;
+        business_category: string;
+        slot_interval_minutes: number;
     }) => {
         updateSettings.mutate({
             name: data.name,
@@ -51,6 +55,8 @@ export function CompanyProfileForm() {
             timezone: data.timezone,
             currency: data.currency,
             allow_guest_checkout: data.allow_guest_checkout,
+            business_category: data.business_category || null,
+            slot_interval_minutes: Number(data.slot_interval_minutes),
         });
     };
 
@@ -171,6 +177,46 @@ export function CompanyProfileForm() {
                             <option value="EUR">EUR - Euro</option>
                             <option value="GBP">GBP - British Pound</option>
                         </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Business Category
+                        </label>
+                        <select
+                            {...register('business_category')}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                        >
+                            <option value="">Select a category...</option>
+                            <option value="wellness">Wellness & Spa</option>
+                            <option value="salon">Salon & Beauty</option>
+                            <option value="fitness">Fitness & Gym</option>
+                            <option value="healthcare">Healthcare</option>
+                            <option value="consulting">Consulting</option>
+                            <option value="education">Education & Tutoring</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Slot Interval
+                        </label>
+                        <select
+                            {...register('slot_interval_minutes', { valueAsNumber: true })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                        >
+                            <option value={5}>5 minutes</option>
+                            <option value={10}>10 minutes</option>
+                            <option value={15}>15 minutes</option>
+                            <option value={20}>20 minutes</option>
+                            <option value={30}>30 minutes</option>
+                            <option value={45}>45 minutes</option>
+                            <option value={60}>60 minutes</option>
+                        </select>
+                        <p className="mt-1 text-xs text-gray-500">
+                            Time intervals for the booking calendar
+                        </p>
                     </div>
                 </div>
             </div>
