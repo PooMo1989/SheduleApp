@@ -3,20 +3,18 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { trpc } from '@/lib/trpc/client';
-import { UserPermissions } from '@/lib/utils/permissions';
 
 interface InviteFormData {
     email: string;
-    isAdmin: boolean;
-    isProvider: boolean;
-    canManageServices: boolean;
-    canViewAllBookings: boolean;
+    name: string;
+    phone: string;
+    position: string;
 }
 
 /**
  * Invite Form Component
- * Story 2.4 + 2.4.1: Form to invite team members with role selection
- * Story 2.5.2: Granular permissions
+ * Story 2.4.6: Simplified invite form with name, phone, position
+ * v3 flow: admin and team member are the same
  */
 export function InviteForm() {
     const [showSuccess, setShowSuccess] = useState(false);
@@ -40,63 +38,55 @@ export function InviteForm() {
         register,
         handleSubmit,
         reset,
-        watch,
         formState: { errors },
     } = useForm<InviteFormData>({
         defaultValues: {
-            isAdmin: false,
-            isProvider: true, // Default to provider
-            canManageServices: false,
-            canViewAllBookings: false,
+            email: '',
+            name: '',
+            phone: '',
+            position: '',
         },
     });
 
-    const isAdmin = watch('isAdmin');
-    const isProvider = watch('isProvider');
-
     const onSubmit = (data: InviteFormData) => {
-        // Build roles array from checkboxes
-        const roles: ('admin' | 'provider')[] = [];
-        if (data.isAdmin) roles.push('admin');
-        if (data.isProvider) roles.push('provider');
-
-        // Ensure at least one role is selected
-        if (roles.length === 0) {
-            return; // Validation will show error
-        }
-
-        // Build permissions object
-        const permissions: UserPermissions = {};
-
-        // If admin, they have everything typically
-        // If not admin, we set explicit permissions
-        if (!data.isAdmin) {
-            if (data.canManageServices) {
-                permissions.services = { view: true, add: true, edit: true };
-            }
-            if (data.canViewAllBookings) {
-                permissions.bookings = { view: true };
-            }
-        }
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        invite.mutate({ email: data.email, roles, permissions: permissions as any });
+        invite.mutate({
+            email: data.email,
+            name: data.name,
+            phone: data.phone || undefined,
+            position: data.position || undefined,
+        });
     };
-
-    const noRoleSelected = !isAdmin && !isProvider;
 
     return (
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">Invite Team Member</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">Add Team Member</h3>
             <p className="text-sm text-gray-500 mb-4">
                 Send an invitation to join your team
             </p>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                {/* Name Input */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                        {...register('name', {
+                            required: 'Name is required',
+                        })}
+                        type="text"
+                        placeholder="John Smith"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    />
+                    {errors.name && (
+                        <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+                    )}
+                </div>
+
                 {/* Email Input */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Email Address
+                        Email Address <span className="text-red-500">*</span>
                     </label>
                     <input
                         {...register('email', {
@@ -115,66 +105,31 @@ export function InviteForm() {
                     )}
                 </div>
 
-                {/* Role Selection */}
+                {/* Phone Input */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Roles (select at least one)
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Mobile Number
                     </label>
-                    <div className="flex flex-col gap-2">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                                {...register('isProvider')}
-                                type="checkbox"
-                                className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500"
-                            />
-                            <span className="text-sm text-gray-700">
-                                <strong>Provider</strong> — Can be booked for services
-                            </span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                                {...register('isAdmin')}
-                                type="checkbox"
-                                className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500"
-                            />
-                            <span className="text-sm text-gray-700">
-                                <strong>Admin</strong> — Can manage team, services, settings
-                            </span>
-                        </label>
-                    </div>
-                    {noRoleSelected && (
-                        <p className="mt-1 text-sm text-red-600">Select at least one role</p>
-                    )}
+                    <input
+                        {...register('phone')}
+                        type="tel"
+                        placeholder="+1 (555) 123-4567"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    />
                 </div>
 
-                {/* Permissions Selection (Only show if Provider selected AND not Admin) */}
-                {isProvider && !isAdmin && (
-                    <div className="pl-6 border-l-2 border-gray-100 space-y-2">
-                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
-                            Provider Permissions
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                                {...register('canManageServices')}
-                                type="checkbox"
-                                className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500"
-                            />
-                            <span className="text-sm text-gray-700">
-                                Manage Services (Add/Edit)
-                            </span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                                {...register('canViewAllBookings')}
-                                type="checkbox"
-                                className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500"
-                            />
-                            <span className="text-sm text-gray-700">
-                                View All Bookings (Not just own)
-                            </span>
-                        </label>
-                    </div>
-                )}
+                {/* Position Input */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Position
+                    </label>
+                    <input
+                        {...register('position')}
+                        type="text"
+                        placeholder="e.g. Senior Stylist, Manager"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    />
+                </div>
 
                 {/* Error Display */}
                 {invite.error && (
@@ -184,7 +139,7 @@ export function InviteForm() {
                 {/* Submit Button */}
                 <button
                     type="submit"
-                    disabled={invite.isPending || noRoleSelected}
+                    disabled={invite.isPending}
                     className="w-full px-4 py-2 bg-teal-600 text-white font-medium rounded-lg hover:bg-teal-700 disabled:opacity-50 transition-colors"
                 >
                     {invite.isPending ? 'Sending...' : 'Send Invitation'}
@@ -195,7 +150,7 @@ export function InviteForm() {
             {showSuccess && (
                 <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                     <p className="text-sm text-green-700 font-medium">
-                        ✓ Invitation sent!
+                        Invitation sent!
                     </p>
                     {inviteUrl && (
                         <div className="mt-2">

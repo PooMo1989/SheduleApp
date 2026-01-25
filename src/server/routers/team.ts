@@ -28,13 +28,39 @@ type Role = typeof validRoles[number];
 export const teamRouter = router({
     /**
      * Get all team members for the tenant
-     * Includes both active users and pending invitations
+     * Story 2.4.7: Extended member data including position, avatar, isActive
      */
     getMembers: adminProcedure.query(async ({ ctx }) => {
-        // Get all users in the tenant (except clients)
+        // Extended user type with new columns from migration 025
+        type ExtendedUser = {
+            id: string;
+            full_name: string | null;
+            phone: string | null;
+            avatar_url: string | null;
+            roles: string[] | null;
+            permissions: Json | null;
+            created_at: string | null;
+            position: string | null;
+            is_active: boolean | null;
+        };
+
+        // Extended invitation type with new columns from migration 025
+        type ExtendedInvitation = {
+            id: string;
+            email: string;
+            name: string | null;
+            phone: string | null;
+            position: string | null;
+            roles: string[] | null;
+            status: string;
+            created_at: string | null;
+            expires_at: string;
+        };
+
+        // Get all users in the tenant with extended fields
         const { data: users, error: usersError } = await ctx.supabase
             .from('users')
-            .select('id, full_name, email_verified, roles, created_at')
+            .select('*')
             .order('created_at', { ascending: false });
 
         if (usersError) {
@@ -45,10 +71,10 @@ export const teamRouter = router({
             });
         }
 
-        // Get pending invitations
+        // Get pending invitations with extended fields
         const { data: invitations, error: invitationsError } = await ctx.supabase
             .from('team_invitations')
-            .select('id, email, roles, status, created_at, expires_at')
+            .select('*')
             .eq('status', 'pending')
             .order('created_at', { ascending: false });
 
@@ -60,25 +86,27 @@ export const teamRouter = router({
             });
         }
 
-        // Transform to unified list
-        const members = users?.map(user => ({
+        // Transform to unified list with extended fields
+        const members = (users as unknown as ExtendedUser[])?.map(user => ({
             id: user.id,
-            email: null, // Need auth.users for email
             name: user.full_name,
-            roles: user.roles as Role[],
-            status: 'active' as const,
-            invitedAt: null,
+            phone: user.phone ?? null,
+            position: user.position ?? null,
+            avatarUrl: user.avatar_url,
+            roles: (user.roles as Role[]) || [],
+            permissions: user.permissions as Record<string, unknown> | null,
+            isActive: user.is_active ?? true,
             joinedAt: user.created_at,
         })) || [];
 
-        const pendingInvites = invitations?.map(inv => ({
+        const pendingInvites = (invitations as unknown as ExtendedInvitation[])?.map(inv => ({
             id: inv.id,
             email: inv.email,
-            name: null,
-            roles: (inv.roles as Role[]) || ['provider'],
-            status: 'invited' as const,
+            name: inv.name ?? null,
+            phone: inv.phone ?? null,
+            position: inv.position ?? null,
+            roles: (inv.roles as Role[]) || ['admin'],
             invitedAt: inv.created_at,
-            joinedAt: null,
             expiresAt: inv.expires_at,
         })) || [];
 
@@ -90,19 +118,196 @@ export const teamRouter = router({
     }),
 
     /**
+     * Update a team member's profile fields
+     * Story 2.4.7: Toggle active/inactive and update profile
+     */
+    updateMember: adminProcedure
+        .input(z.object({
+            userId: z.string().uuid(),
+            name: z.string().min(1).optional(),
+            phone: z.string().optional(),
+            position: z.string().optional(),
+            avatarUrl: z.string().url().optional().nullable(),
+            isActive: z.boolean().optional(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            const { userId, name, phone, position, avatarUrl, isActive } = input;
+
+            // Build update object with only provided fields
+            const updateData: Record<string, unknown> = {
+                updated_at: new Date().toISOString(),
+            };
+            if (name !== undefined) updateData.full_name = name;
+            if (phone !== undefined) updateData.phone = phone;
+            if (position !== undefined) updateData.position = position;
+            if (avatarUrl !== undefined) updateData.avatar_url = avatarUrl;
+            if (isActive !== undefined) updateData.is_active = isActive;
+
+            const { error } = await ctx.supabase
+                .from('users')
+                .update(updateData)
+                .eq('id', userId);
+
+            if (error) {
+                throw new TRPCError({
+                    code: 'INTERNAL_SERVER_ERROR',
+                    message: 'Failed to update team member',
+                    cause: error,
+                });
+            }
+
+            return { success: true };
+        }),
+
+    /**
+     * Get a single team member by ID
+     * Story 2.4.5: Team Member Detail View
+     */
+    getById: adminProcedure
+        .input(z.object({
+            userId: z.string().uuid(),
+        }))
+        .query(async ({ ctx, input }) => {
+            // Extended user type with new columns from migration 025
+            type ExtendedUser = {
+                id: string;
+                full_name: string | null;
+                phone: string | null;
+                avatar_url: string | null;
+                roles: string[] | null;
+                permissions: Json | null;
+                created_at: string | null;
+                position: string | null;
+                is_active: boolean | null;
+            };
+
+            const { data, error } = await ctx.supabase
+                .from('users')
+                .select('*')
+                .eq('id', input.userId)
+                .single();
+
+            if (error || !data) {
+                throw new TRPCError({
+                    code: 'NOT_FOUND',
+                    message: 'Team member not found',
+                });
+            }
+
+            const user = data as unknown as ExtendedUser;
+
+            return {
+                id: user.id,
+                name: user.full_name,
+                phone: user.phone ?? null,
+                position: user.position ?? null,
+                avatarUrl: user.avatar_url,
+                roles: (user.roles as Role[]) || [],
+                permissions: user.permissions as Record<string, Record<string, boolean>> | null,
+                isActive: user.is_active ?? true,
+                createdAt: user.created_at,
+            };
+        }),
+
+    /**
+     * Update a team member's permissions
+     * Story 2.4.5: Permissions tab in detail view
+     */
+    updatePermissions: adminProcedure
+        .input(z.object({
+            userId: z.string().uuid(),
+            permissions: z.object({
+                services: z.object({
+                    view: z.boolean().optional(),
+                    add: z.boolean().optional(),
+                    edit: z.boolean().optional(),
+                    delete: z.boolean().optional(),
+                }).optional(),
+                providers: z.object({
+                    view: z.boolean().optional(),
+                    add: z.boolean().optional(),
+                    edit: z.boolean().optional(),
+                    delete: z.boolean().optional(),
+                }).optional(),
+                bookings: z.object({
+                    view: z.boolean().optional(),
+                    manage: z.boolean().optional(),
+                }).optional(),
+                team: z.object({
+                    view: z.boolean().optional(),
+                    invite: z.boolean().optional(),
+                    edit: z.boolean().optional(),
+                }).optional(),
+                payments: z.object({
+                    view: z.boolean().optional(),
+                    refund: z.boolean().optional(),
+                }).optional(),
+                company: z.object({
+                    edit: z.boolean().optional(),
+                }).optional(),
+            }),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            const { userId, permissions } = input;
+
+            // Get existing permissions
+            const { data: user, error: fetchError } = await ctx.supabase
+                .from('users')
+                .select('permissions')
+                .eq('id', userId)
+                .single();
+
+            if (fetchError) {
+                throw new TRPCError({
+                    code: 'NOT_FOUND',
+                    message: 'Team member not found',
+                });
+            }
+
+            // Merge new permissions with existing
+            const existingPermissions = (user?.permissions as Record<string, unknown>) || {};
+            const mergedPermissions = {
+                ...existingPermissions,
+                ...permissions,
+            };
+
+            // Update permissions
+            const { error } = await ctx.supabase
+                .from('users')
+                .update({
+                    permissions: mergedPermissions as unknown as Json,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('id', userId);
+
+            if (error) {
+                throw new TRPCError({
+                    code: 'INTERNAL_SERVER_ERROR',
+                    message: 'Failed to update permissions',
+                    cause: error,
+                });
+            }
+
+            return { success: true, permissions: mergedPermissions };
+        }),
+
+    /**
      * Send an invitation to a new team member
-     * Supports multiple roles
+     * Story 2.4.6: Simplified invite with name, phone, position
+     * v3 flow: admin and team member are the same, default role = ['admin']
      */
     invite: adminProcedure
         .input(z.object({
             email: z.string().email('Invalid email address'),
-            roles: z.array(z.enum(validRoles)).min(1, 'At least one role required'),
-            permissions: z.record(z.string(), z.any()).optional(),
-            placeholderProviderId: z.string().uuid().optional(),
+            name: z.string().min(1, 'Name is required'),
+            phone: z.string().optional(),
+            position: z.string().optional(),
         }))
         .mutation(async ({ ctx, input }) => {
-            const { roles, permissions, placeholderProviderId } = input;
+            const { name, phone, position } = input;
             const email = input.email.toLowerCase();
+            // v3: All team members are admins by default
+            const roles: Role[] = ['admin'];
 
             // Check if there's already a pending invitation
             const { data: existingInvite } = await ctx.supabase
@@ -122,15 +327,16 @@ export const teamRouter = router({
             // Generate invitation token
             const token = generateToken();
 
-            // Create the invitation with roles and permissions
+            // Create the invitation with name, phone, position
             const { data: invitation, error } = await ctx.supabase
                 .from('team_invitations')
                 .insert({
                     tenant_id: ctx.tenantId,
                     email,
-                    roles, // Store roles array
-                    default_permissions: (permissions || {}) as unknown as Json, // Store permissions (cast to Json)
-                    placeholder_provider_id: placeholderProviderId ?? null,
+                    name,
+                    phone: phone ?? null,
+                    position: position ?? null,
+                    roles,
                     token,
                     invited_by: ctx.userId,
                     expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),

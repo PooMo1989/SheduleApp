@@ -2526,7 +2526,7 @@ So that **I can find what I need efficiently**.
 
 ## Admin Navigation & Layout Stories
 
-### Story 2.8.4: Admin Sidebar Restructure
+### Story 2.8.4: Admin Sidebar Restructure ✅ DONE
 
 As an **owner/admin**,
 I want **the sidebar to reflect the User Flow v3 navigation structure**,
@@ -2668,7 +2668,7 @@ So that **all configuration is in one logical place**.
 
 ---
 
-### Story 2.8.8: Profile Page (All Roles)
+### Story 2.8.8: Profile Page (All Roles) ✅ DONE
 
 As a **user of any role**,
 I want **a Profile page to manage my personal information**,
@@ -2778,7 +2778,7 @@ So that **I can configure all aspects of a service in a structured flow**.
 
 ---
 
-### Story 2.4.5: Team Member Detail View
+### Story 2.4.5: Team Member Detail View ✅ DONE
 
 As an **owner/admin**,
 I want **to view and manage team member details in a side panel**,
@@ -2822,7 +2822,7 @@ So that **I can see their info and configure permissions without leaving the lis
 
 ---
 
-### Story 2.4.6: Enhanced Invite Form (v3 Aligned)
+### Story 2.4.6: Enhanced Invite Form (v3 Aligned) ✅ DONE
 
 As an **owner/admin**,
 I want **the team invitation form to collect name, phone, and position**,
@@ -2857,7 +2857,7 @@ So that **invited members have pre-filled profiles on acceptance**.
 
 ---
 
-### Story 2.4.7: Team List UI Enhancements
+### Story 2.4.7: Team List UI Enhancements ✅ DONE
 
 As an **owner/admin**,
 I want **the team list to show avatars, positions, active toggles, and search**,
@@ -2892,7 +2892,7 @@ So that **I can quickly find and manage team members**.
 
 ---
 
-### Story 6.0: Provider Layout Shell
+### Story 6.0: Provider Layout Shell ✅ DONE
 
 As a **provider**,
 I want **a dedicated navigation layout when I'm logged in**,

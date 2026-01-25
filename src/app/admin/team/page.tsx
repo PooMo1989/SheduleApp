@@ -1,29 +1,47 @@
-import { TeamList, InviteForm } from '@/features/team/components';
+'use client';
+
+import { useState } from 'react';
+import { TeamList, InviteForm, TeamMemberDetail } from '@/features/team/components';
+import { ListDetailSplitView } from '@/components/common';
 
 /**
  * Admin Team Page
  * Story 2.4: Team Invitations & Member Management
+ * Story 2.4.5: Team Member Detail View with ListDetailSplitView
  */
 export default function AdminTeamPage() {
+    const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+
     return (
-        <div className="min-h-screen bg-gray-50">
-            <div className="max-w-4xl mx-auto py-8 px-4">
-                {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-2xl font-bold text-gray-900">Team Management</h1>
-                    <p className="text-gray-500 mt-1">
-                        Invite team members and manage your staff
-                    </p>
-                </div>
+        <div className="h-[calc(100vh-4rem)] bg-gray-50">
+            <ListDetailSplitView
+                list={
+                    <div className="p-4 md:p-6 space-y-6">
+                        {/* Header */}
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900">Team Management</h1>
+                            <p className="text-gray-500 mt-1">
+                                Invite team members and manage your staff
+                            </p>
+                        </div>
 
-                {/* Invite Form */}
-                <div className="mb-8">
-                    <InviteForm />
-                </div>
+                        {/* Invite Form */}
+                        <InviteForm />
 
-                {/* Team List */}
-                <TeamList />
-            </div>
+                        {/* Team List */}
+                        <TeamList
+                            onSelectMember={setSelectedMemberId}
+                            selectedMemberId={selectedMemberId}
+                        />
+                    </div>
+                }
+                detail={
+                    selectedMemberId ? (
+                        <TeamMemberDetail memberId={selectedMemberId} />
+                    ) : null
+                }
+                onClose={() => setSelectedMemberId(null)}
+            />
         </div>
     );
 }
