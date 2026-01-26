@@ -1449,7 +1449,7 @@ So that **I can prepare for future assignment features**.
 
 ## Epic 3: Embeddable Booking Widget
 
-### Story 3.1: Embeddable Calendar Widget (Backend Ready ✅)
+### Story 3.1: Embeddable Calendar Widget (Backend Ready) ✅ DONE
 
 As a **client visiting an external website**,
 I want **to see available slots and book directly in an embedded widget**,
