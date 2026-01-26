@@ -1,6 +1,37 @@
+import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
 import { LogoutButton } from '@/components/common/LogoutButton';
 
-export default function DashboardPage() {
+/**
+ * Client Dashboard Page
+ *
+ * This is the default dashboard for clients (users without admin/provider roles).
+ * Admin/Owner users are redirected to /admin/dashboard.
+ * Provider users are redirected to /provider/dashboard.
+ */
+export default async function DashboardPage() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (user) {
+        const { data: userData } = await supabase
+            .from('users')
+            .select('roles')
+            .eq('id', user.id)
+            .single();
+
+        const roles: string[] = userData?.roles || [];
+
+        // Redirect admin/owner to admin dashboard
+        if (roles.includes('owner') || roles.includes('admin')) {
+            redirect('/admin/dashboard');
+        }
+
+        // Redirect provider to provider dashboard
+        if (roles.includes('provider')) {
+            redirect('/provider/dashboard');
+        }
+    }
     return (
         <div className="min-h-screen bg-neutral-50">
             {/* Header */}
