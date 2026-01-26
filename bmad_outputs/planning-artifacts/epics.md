@@ -1434,11 +1434,16 @@ So that **I can prepare for future assignment features**.
 
 ## Epic 3: Embeddable Booking Widget
 
-### Story 3.1: Embeddable Calendar Widget
+### Story 3.1: Embeddable Calendar Widget (Backend Ready ✅)
 
 As a **client visiting an external website**,
 I want **to see available slots and book directly in an embedded widget**,
 So that **I can book without leaving the business's website**.
+
+**Backend Implementation Status:** ✅ Complete
+- `availability.getSlots` - Returns available time slots (5-layer filtered)
+- `availability.checkSlot` - Real-time slot validation
+- `booking.create` - Creates booking with guest support
 
 **Acceptance Criteria:**
 
@@ -1451,7 +1456,7 @@ So that **I can book without leaving the business's website**.
 
 **Given** I click an available date
 **When** slots are displayed
-**Then** I see time slots that passed the 4-layer filter
+**Then** I see time slots that passed the 5-layer filter *(API: `availability.getSlots`)*
 
 **Given** I select a time slot
 **When** I am not logged in
@@ -1459,7 +1464,7 @@ So that **I can book without leaving the business's website**.
 
 **Given** I complete the booking form
 **When** I click "Book (Pay Later)"
-**Then** a booking is created with status PENDING
+**Then** a booking is created with status PENDING *(API: `booking.create`)*
 **And** I see a confirmation screen
 
 **Given** the widget is embedded in an iframe
@@ -1519,26 +1524,31 @@ So that **I can verify the embed functionality works correctly**.
 
 ---
 
-### Story 3.4: Booking Creation (Pay Later)
+### Story 3.4: Booking Creation (Pay Later) (Backend Ready ✅)
 
 As a **client**,
 I want **to book an appointment with "Pay Later" option**,
 So that **I can reserve a slot without immediate payment** (FR23-FR24).
 
+**Backend Implementation Status:** ✅ Complete
+- `booking.create` - Creates booking with status: pending
+- `booking.getMyBookings` - Client can view their bookings
+- DB exclusion constraint prevents race conditions (double-booking)
+
 **Acceptance Criteria:**
 
 **Given** I have selected a time slot
 **When** I click "Book (Pay Later)"
-**Then** a `bookings` table record is created with status: PENDING
+**Then** a `bookings` table record is created with status: PENDING *(API: `booking.create`)*
 **And** the booking includes: client_id, provider_id, service_id, date_time, tenant_id
 
 **Given** the booking is created
-**When** I view my booking
+**When** I view my booking *(API: `booking.getMyBookings`)*
 **Then** I see "Pending Admin Approval" status
 
 **Given** the slot I'm booking
 **When** another user tries to book the same slot
-**Then** they see "Slot no longer available" (race condition handled)
+**Then** they see "Slot no longer available" (race condition handled via DB exclusion constraint)
 
 ---
 
@@ -1578,11 +1588,16 @@ So that **I know my booking was successful**.
 
 ---
 
-### Story 3.6: Guest Booking Flow (Lazy Registration)
+### Story 3.6: Guest Booking Flow (Lazy Registration) (Backend Ready ✅)
 
 As a **new client**,
 I want **to book an appointment without creating an account upfront**,
 So that **I can complete my booking quickly without friction** (FR10, FR13).
+
+**Backend Implementation Status:** ✅ Complete
+- `booking.create` - Accepts guest bookings (clientUserId optional)
+- Stores client_name, client_email, client_phone for guest identification
+- `booking.getById` - Lookup booking by ID for confirmation
 
 **Acceptance Criteria:**
 
@@ -1590,7 +1605,7 @@ So that **I can complete my booking quickly without friction** (FR10, FR13).
 **When** I click "Book this slot"
 **Then** I see a simple booking details form
 **And** the page shows my selected service, provider, date/time at the top
-**And** I see required fields: Name, Phone, Email
+**And** I see required fields: Name, Phone, Email *(stored in bookings table)*
 **And** I see "Continue with Google" as an alternative (creates full account)
 **And** I see "Proceed to Payment" CTA button
 
@@ -1784,16 +1799,19 @@ So that **I can review them promptly** (FR28).
 
 ## Epic 5: Booking Management
 
-### Story 5.1: Client Bookings Dashboard
+### Story 5.1: Client Bookings Dashboard (Backend Ready ✅)
 
 As a **client**,
 I want **to see all my bookings in one place**,
 So that **I can track upcoming and past appointments** (FR21).
 
+**Backend Implementation Status:** ✅ Complete
+- `booking.getMyBookings` - Returns client's bookings with filters
+
 **Acceptance Criteria:**
 
 **Given** I am logged in as a client
-**When** I access My Bookings page
+**When** I access My Bookings page *(API: `booking.getMyBookings`)*
 **Then** I see tabs for "Upcoming" and "Past" bookings
 **And** each booking shows: service, provider, date/time, status
 **And** upcoming bookings show "Reschedule" and "Cancel" buttons
@@ -1827,11 +1845,14 @@ So that **I can adjust when plans change** (FR19).
 
 ---
 
-### Story 5.3: Cancel Booking
+### Story 5.3: Cancel Booking (Backend Ready ✅)
 
 As a **client**,
 I want **to cancel my booking**,
 So that **I can free up the slot if I can't attend** (FR20).
+
+**Backend Implementation Status:** ✅ Complete
+- `booking.cancel` - Client self-service cancellation with reason
 
 **Acceptance Criteria:**
 
@@ -1839,12 +1860,12 @@ So that **I can free up the slot if I can't attend** (FR20).
 **When** I click "Cancel"
 **Then** I see a confirmation modal with cancellation policy
 
-**Given** I confirm cancellation
+**Given** I confirm cancellation *(API: `booking.cancel`)*
 **When** the cancellation is processed
 **Then** booking status changes to CANCELLED
 **And** provider is notified
 **And** Google Calendar event is deleted
-**And** the slot becomes available for others
+**And** the slot becomes available for others (exclusion constraint WHERE clause)
 **And** I see confirmation message
 
 ---
@@ -2059,34 +2080,41 @@ So that **I'm aware of schedule changes** (FR37).
 
 ## Epic 8: Admin Booking Reports
 
-### Story 8.1: All Bookings View
+### Story 8.1: All Bookings View (Backend Ready ✅)
 
 As an **admin**,
 I want **to see all bookings across providers**,
 So that **I have full visibility** (FR51).
 
+**Backend Implementation Status:** ✅ Complete
+- `booking.getAll` - Admin view with filters (status, provider, service, date range)
+
 **Acceptance Criteria:**
 
 **Given** I am logged in as admin
-**When** I access All Bookings page
+**When** I access All Bookings page *(API: `booking.getAll`)*
 **Then** I see list with filters: date range, provider, service, status
 **And** I can export to CSV
 
 ---
 
-### Story 8.2: Admin Booking Management
+### Story 8.2: Admin Booking Management (Backend Ready ✅)
 
 As an **admin**,
 I want **to manage any booking**,
 So that **I can handle issues** (FR52).
 
+**Backend Implementation Status:** ✅ Complete
+- `booking.updateStatus` - Admin can change status (confirm, reject, complete, no_show)
+- `booking.getById` - View booking details
+
 **Acceptance Criteria:**
 
-**Given** I select a booking
+**Given** I select a booking *(API: `booking.getById`)*
 **When** I view details
 **Then** I can reschedule on behalf of client
-**And** I can cancel on behalf of client
-**And** actions are logged with admin user
+**And** I can cancel on behalf of client *(API: `booking.updateStatus`)*
+**And** actions are logged with admin user (cancelled_by field)
 
 ---
 
