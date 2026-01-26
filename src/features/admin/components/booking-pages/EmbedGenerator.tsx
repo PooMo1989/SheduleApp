@@ -82,7 +82,7 @@ export function EmbedGenerator({ services, providers }: EmbedGeneratorProps) {
 
                     <div className="space-y-2">
                         <Label>Theme</Label>
-                        <Select value={theme} onValueChange={(val: string) => setTheme(val)}>
+                        <Select value={theme} onValueChange={(val) => setTheme(val as 'light' | 'dark' | 'minimal')}>
                             <SelectTrigger>
                                 <SelectValue />
                             </SelectTrigger>
