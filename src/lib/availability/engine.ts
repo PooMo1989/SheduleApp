@@ -20,7 +20,6 @@ import type {
     LayerData,
     SlotCheckRequest,
     SlotCheckResponse,
-    SlotCheckResponse,
     TenantConfig,
     ProviderContext,
 } from './types';
