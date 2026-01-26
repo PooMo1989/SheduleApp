@@ -6,11 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { trpc } from '@/lib/trpc/client';
 import { toast } from 'sonner';
-import { CalendarIcon, Plus, Trash2, AlertCircle } from 'lucide-react';
+import { CalendarIcon, Plus, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
-import type { Database } from '@/types/database.types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { Database } from '@/types/database.types';
 
 type ScheduleOverride = Database['public']['Tables']['schedule_overrides']['Row'];
 
@@ -117,7 +116,7 @@ export function DateOverrideManager({ overrides, onOverrideChange, providerId }:
                             <Label>Availability</Label>
                             <Select
                                 value={newType}
-                                onValueChange={(val: any) => setNewType(val)}
+                                onValueChange={(val) => setNewType(val as 'unavailable' | 'custom')}
                             >
                                 <SelectTrigger>
                                     <SelectValue />

@@ -98,8 +98,9 @@ export function WeeklyScheduleEditor({ baseSchedule, onScheduleChange, providerI
         handleSaveDay(dayOfWeek, newSlots);
     };
 
-    const updateSlot = (dayOfWeek: number, index: number, field: keyof TimeSlot, value: any) => {
+    const updateSlot = (dayOfWeek: number, index: number, field: keyof TimeSlot, value: string | boolean) => {
         const newSlots = [...(scheduleMap[dayOfWeek] || [])];
+        // @ts-ignore - Dynamic key assignment
         newSlots[index] = { ...newSlots[index], [field]: value };
 
         const newMap = { ...scheduleMap, [dayOfWeek]: newSlots };

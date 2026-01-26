@@ -6,3 +6,4 @@
 
 export { ProviderSidebar } from './ProviderSidebar';
 export { ProviderLayoutShell } from './ProviderLayoutShell';
+export { ProviderProfileForm } from './ProviderProfileForm';

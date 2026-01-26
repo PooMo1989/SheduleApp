@@ -6,6 +6,7 @@ import { TRPCError } from '@trpc/server';
  * Schedule Router
  * Story 2.7.1: Availability Editor & Story 6.5: Provider Schedule Self-Service
  * Updated to support Admin management (Tier 8)
+ * Fixed: Provider ID lookup for self-service (Tier 8.1)
  */
 export const scheduleRouter = router({
     /**
@@ -18,22 +19,12 @@ export const scheduleRouter = router({
             providerId: z.string().uuid().optional(),
         }).optional())
         .query(async ({ ctx, input }) => {
-            let targetProviderId = ctx.user.id;
+            let targetProviderId: string;
 
-            // If requesting a specific provider
+            // 1. Determine Target Provider ID
             if (input?.providerId) {
-                // If not self, must be admin (or generic read access if we allow public profile schedules? 
-                // Public usually goes through dedicated public procedure. Internal requires privs.)
+                // Admin Mode: accessing a specific provider
                 if (input.providerId !== ctx.user.id) {
-                    // Check if admin
-                    const { data: userRoles } = await ctx.supabase
-                        .rpc('get_current_user_role');
-
-                    // Simple role check based on established patterns 
-                    // (Assuming middleware or context already has role, but RPC is safe)
-                    // Actually ctx.user has roles if we put them there? 
-                    // Let's rely on checking if they are admin via DB if ctx isn't sufficient.
-
                     const { data: isAdmin } = await ctx.supabase.rpc('is_admin');
                     if (!isAdmin) {
                         throw new TRPCError({
@@ -41,12 +32,23 @@ export const scheduleRouter = router({
                             message: 'Insufficient permissions to view another provider schedule',
                         });
                     }
-                    targetProviderId = input.providerId;
                 }
+                targetProviderId = input.providerId;
             } else {
-                // Self-access requires being a provider (or having a schedule)
-                // We don't strictly enforce 'provider' role here as long as they have an ID, 
-                // but practically they should be a provider.
+                // Self-Service Mode: Resolve Provider ID from User ID
+                const { data: provider, error } = await ctx.supabase
+                    .from('providers')
+                    .select('id')
+                    .eq('user_id', ctx.user.id)
+                    .single();
+
+                if (error || !provider) {
+                    throw new TRPCError({
+                        code: 'NOT_FOUND',
+                        message: 'No provider profile found for this user',
+                    });
+                }
+                targetProviderId = provider.id;
             }
 
             // Fetch base schedule
@@ -88,16 +90,21 @@ export const scheduleRouter = router({
             };
         }),
 
-    // Legacy alias for self-service
+    // Legacy alias - mapped to new logic
     getMine: providerProcedure.query(async ({ ctx }) => {
-        // ... Reusing logic or just calling the internal logic is hard in TRPC simply. 
-        // We'll just duplicate the fetch for MVP or deprecate this and update frontend.
-        // Let's deprecate and point frontend to getSchedule({}).
-        // For now, keep it working for existing code while I refactor.
+        // Resolve Provider ID
+        const { data: provider } = await ctx.supabase
+            .from('providers')
+            .select('id')
+            .eq('user_id', ctx.user.id)
+            .single();
+
+        if (!provider) throw new TRPCError({ code: 'NOT_FOUND', message: 'Provider not found' });
+
         const { data: baseSchedule } = await ctx.supabase
             .from('provider_schedules')
             .select('*')
-            .eq('provider_id', ctx.user.id)
+            .eq('provider_id', provider.id)
             .order('day_of_week', { ascending: true })
             .order('start_time', { ascending: true });
 
@@ -105,7 +112,7 @@ export const scheduleRouter = router({
         const { data: overrides } = await ctx.supabase
             .from('schedule_overrides')
             .select('*')
-            .eq('provider_id', ctx.user.id)
+            .eq('provider_id', provider.id)
             .gte('override_date', today)
             .order('override_date', { ascending: true });
 
@@ -129,17 +136,22 @@ export const scheduleRouter = router({
             })),
         }))
         .mutation(async ({ ctx, input }) => {
-            let targetProviderId = ctx.user.id;
+            let targetProviderId: string;
 
-            if (input.providerId && input.providerId !== ctx.user.id) {
-                const { data: isAdmin } = await ctx.supabase.rpc('is_admin');
-                if (!isAdmin) {
-                    throw new TRPCError({
-                        code: 'FORBIDDEN',
-                        message: 'Only admins can update other providers schedules',
-                    });
+            if (input.providerId) {
+                if (input.providerId !== ctx.user.id) {
+                    const { data: isAdmin } = await ctx.supabase.rpc('is_admin');
+                    if (!isAdmin) throw new TRPCError({ code: 'FORBIDDEN', message: 'Forbidden' });
                 }
                 targetProviderId = input.providerId;
+            } else {
+                const { data: provider } = await ctx.supabase
+                    .from('providers')
+                    .select('id')
+                    .eq('user_id', ctx.user.id)
+                    .single();
+                if (!provider) throw new TRPCError({ code: 'NOT_FOUND', message: 'Provider not found' });
+                targetProviderId = provider.id;
             }
 
             const { dayOfWeek, slots } = input;
@@ -159,17 +171,20 @@ export const scheduleRouter = router({
                 });
             }
 
-            // 2. Insert new slots
-            if (slots.length > 0) {
+            // 2. Insert new slots (only available ones)
+            // Note: Filter at app layer before DB to keep DB clean
+            const activeSlots = slots.filter(s => s.isAvailable);
+
+            if (activeSlots.length > 0) {
                 const { error: insertError } = await ctx.supabase
                     .from('provider_schedules')
                     .insert(
-                        slots.map((slot) => ({
+                        activeSlots.map((slot) => ({
                             provider_id: targetProviderId,
                             day_of_week: dayOfWeek,
                             start_time: slot.startTime,
                             end_time: slot.endTime,
-                            is_available: slot.isAvailable,
+                            is_available: true, // Always true if inserted, unless we support stored blocked slots
                         }))
                     );
 
@@ -198,14 +213,22 @@ export const scheduleRouter = router({
             reason: z.string().optional(),
         }))
         .mutation(async ({ ctx, input }) => {
-            let targetProviderId = ctx.user.id;
+            let targetProviderId: string;
 
-            if (input.providerId && input.providerId !== ctx.user.id) {
-                const { data: isAdmin } = await ctx.supabase.rpc('is_admin');
-                if (!isAdmin) {
-                    throw new TRPCError({ code: 'FORBIDDEN', message: 'Forbidden' });
+            if (input.providerId) {
+                if (input.providerId !== ctx.user.id) {
+                    const { data: isAdmin } = await ctx.supabase.rpc('is_admin');
+                    if (!isAdmin) throw new TRPCError({ code: 'FORBIDDEN', message: 'Forbidden' });
                 }
                 targetProviderId = input.providerId;
+            } else {
+                const { data: provider } = await ctx.supabase
+                    .from('providers')
+                    .select('id')
+                    .eq('user_id', ctx.user.id)
+                    .single();
+                if (!provider) throw new TRPCError({ code: 'NOT_FOUND', message: 'Provider not found' });
+                targetProviderId = provider.id;
             }
 
             const { error } = await ctx.supabase
@@ -240,14 +263,22 @@ export const scheduleRouter = router({
             date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format YYYY-MM-DD'),
         }))
         .mutation(async ({ ctx, input }) => {
-            let targetProviderId = ctx.user.id;
+            let targetProviderId: string;
 
-            if (input.providerId && input.providerId !== ctx.user.id) {
-                const { data: isAdmin } = await ctx.supabase.rpc('is_admin');
-                if (!isAdmin) {
-                    throw new TRPCError({ code: 'FORBIDDEN', message: 'Forbidden' });
+            if (input.providerId) {
+                if (input.providerId !== ctx.user.id) {
+                    const { data: isAdmin } = await ctx.supabase.rpc('is_admin');
+                    if (!isAdmin) throw new TRPCError({ code: 'FORBIDDEN', message: 'Forbidden' });
                 }
                 targetProviderId = input.providerId;
+            } else {
+                const { data: provider } = await ctx.supabase
+                    .from('providers')
+                    .select('id')
+                    .eq('user_id', ctx.user.id)
+                    .single();
+                if (!provider) throw new TRPCError({ code: 'NOT_FOUND', message: 'Provider not found' });
+                targetProviderId = provider.id;
             }
 
             const { error } = await ctx.supabase
