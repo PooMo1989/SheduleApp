@@ -14,6 +14,120 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          buffer_after_minutes: number
+          buffer_before_minutes: number
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          client_email: string
+          client_name: string
+          client_notes: string | null
+          client_phone: string | null
+          client_user_id: string | null
+          created_at: string | null
+          currency: string | null
+          duration_minutes: number
+          end_time: string
+          id: string
+          internal_notes: string | null
+          price: number | null
+          provider_id: string
+          service_id: string
+          start_time: string
+          status: Database["public"]["Enums"]["booking_status"]
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          buffer_after_minutes?: number
+          buffer_before_minutes?: number
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          client_email: string
+          client_name: string
+          client_notes?: string | null
+          client_phone?: string | null
+          client_user_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          duration_minutes: number
+          end_time: string
+          id?: string
+          internal_notes?: string | null
+          price?: number | null
+          provider_id: string
+          service_id: string
+          start_time: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          buffer_after_minutes?: number
+          buffer_before_minutes?: number
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          client_email?: string
+          client_name?: string
+          client_notes?: string | null
+          client_phone?: string | null
+          client_user_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          duration_minutes?: number
+          end_time?: string
+          id?: string
+          internal_notes?: string | null
+          price?: number | null
+          provider_id?: string
+          service_id?: string
+          start_time?: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_client_user_id_fkey"
+            columns: ["client_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string | null
@@ -158,8 +272,8 @@ export type Database = {
           name: string
           phone: string | null
           photo_url: string | null
+          schedule_autonomy: string | null
           specialization: string | null
-          schedule_autonomy: 'self_managed' | 'approval_required' | null
           tenant_id: string
           title: string | null
           updated_at: string | null
@@ -176,8 +290,8 @@ export type Database = {
           name: string
           phone?: string | null
           photo_url?: string | null
+          schedule_autonomy?: string | null
           specialization?: string | null
-          schedule_autonomy?: 'self_managed' | 'approval_required' | null
           tenant_id: string
           title?: string | null
           updated_at?: string | null
@@ -194,8 +308,8 @@ export type Database = {
           name?: string
           phone?: string | null
           photo_url?: string | null
+          schedule_autonomy?: string | null
           specialization?: string | null
-          schedule_autonomy?: 'self_managed' | 'approval_required' | null
           tenant_id?: string
           title?: string | null
           updated_at?: string | null
@@ -310,12 +424,120 @@ export type Database = {
           },
         ]
       }
+      service_schedule_overrides: {
+        Row: {
+          created_at: string | null
+          end_time: string | null
+          id: string
+          is_available: boolean
+          override_date: string
+          reason: string | null
+          service_id: string
+          start_time: string | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          end_time?: string | null
+          id?: string
+          is_available?: boolean
+          override_date: string
+          reason?: string | null
+          service_id: string
+          start_time?: string | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          end_time?: string | null
+          id?: string
+          is_available?: boolean
+          override_date?: string
+          reason?: string | null
+          service_id?: string
+          start_time?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_schedule_overrides_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_schedule_overrides_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_schedules: {
+        Row: {
+          created_at: string | null
+          day_of_week: number
+          end_time: string
+          id: string
+          is_available: boolean | null
+          service_id: string
+          start_time: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          day_of_week: number
+          end_time: string
+          id?: string
+          is_available?: boolean | null
+          service_id: string
+          start_time: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_available?: boolean | null
+          service_id?: string
+          start_time?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_schedules_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_schedules_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
+          auto_confirm: boolean | null
           buffer_after_minutes: number | null
           buffer_before_minutes: number | null
+          cancellation_hours: number | null
           category_id: string | null
           color: string | null
+          confirmation_message: string | null
           created_at: string | null
           currency: string | null
           custom_url_slug: string | null
@@ -325,20 +547,33 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean | null
-          location_type: 'in_person' | 'virtual' | 'both' | null
+          location_type: string | null
           max_capacity: number | null
+          max_future_days: number | null
+          min_notice_hours: number | null
           name: string
+          pay_later_enabled: boolean | null
+          pay_later_mode: string | null
           price: number
-          pricing_type: 'fixed' | 'variable' | 'starting_from' | 'free' | null
+          pricing_type: string | null
+          redirect_url: string | null
+          require_account: boolean | null
           service_type: Database["public"]["Enums"]["service_type"]
+          show_duration: boolean | null
+          show_price: boolean | null
           tenant_id: string
           updated_at: string | null
+          virtual_meeting_url: string | null
+          visibility: string | null
         }
         Insert: {
+          auto_confirm?: boolean | null
           buffer_after_minutes?: number | null
           buffer_before_minutes?: number | null
+          cancellation_hours?: number | null
           category_id?: string | null
           color?: string | null
+          confirmation_message?: string | null
           created_at?: string | null
           currency?: string | null
           custom_url_slug?: string | null
@@ -348,20 +583,33 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean | null
-          location_type?: 'in_person' | 'virtual' | 'both' | null
+          location_type?: string | null
           max_capacity?: number | null
+          max_future_days?: number | null
+          min_notice_hours?: number | null
           name: string
+          pay_later_enabled?: boolean | null
+          pay_later_mode?: string | null
           price: number
-          pricing_type?: 'fixed' | 'variable' | 'starting_from' | 'free' | null
+          pricing_type?: string | null
+          redirect_url?: string | null
+          require_account?: boolean | null
           service_type?: Database["public"]["Enums"]["service_type"]
+          show_duration?: boolean | null
+          show_price?: boolean | null
           tenant_id: string
           updated_at?: string | null
+          virtual_meeting_url?: string | null
+          visibility?: string | null
         }
         Update: {
+          auto_confirm?: boolean | null
           buffer_after_minutes?: number | null
           buffer_before_minutes?: number | null
+          cancellation_hours?: number | null
           category_id?: string | null
           color?: string | null
+          confirmation_message?: string | null
           created_at?: string | null
           currency?: string | null
           custom_url_slug?: string | null
@@ -371,14 +619,24 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean | null
-          location_type?: 'in_person' | 'virtual' | 'both' | null
+          location_type?: string | null
           max_capacity?: number | null
+          max_future_days?: number | null
+          min_notice_hours?: number | null
           name?: string
+          pay_later_enabled?: boolean | null
+          pay_later_mode?: string | null
           price?: number
-          pricing_type?: 'fixed' | 'variable' | 'starting_from' | 'free' | null
+          pricing_type?: string | null
+          redirect_url?: string | null
+          require_account?: boolean | null
           service_type?: Database["public"]["Enums"]["service_type"]
+          show_duration?: boolean | null
+          show_price?: boolean | null
           tenant_id?: string
           updated_at?: string | null
+          virtual_meeting_url?: string | null
+          visibility?: string | null
         }
         Relationships: [
           {
@@ -407,7 +665,10 @@ export type Database = {
           expires_at: string
           id: string
           invited_by: string | null
+          name: string | null
+          phone: string | null
           placeholder_provider_id: string | null
+          position: string | null
           roles: string[] | null
           status: string
           tenant_id: string
@@ -423,7 +684,10 @@ export type Database = {
           expires_at?: string
           id?: string
           invited_by?: string | null
+          name?: string | null
+          phone?: string | null
           placeholder_provider_id?: string | null
+          position?: string | null
           roles?: string[] | null
           status?: string
           tenant_id: string
@@ -439,7 +703,10 @@ export type Database = {
           expires_at?: string
           id?: string
           invited_by?: string | null
+          name?: string | null
+          phone?: string | null
           placeholder_provider_id?: string | null
+          position?: string | null
           roles?: string[] | null
           status?: string
           tenant_id?: string
@@ -481,7 +748,12 @@ export type Database = {
         Row: {
           address: string | null
           allow_guest_checkout: boolean | null
+          bank_account_holder: string | null
+          bank_account_number: string | null
+          bank_branch: string | null
+          bank_name: string | null
           branding: Json | null
+          business_category: string | null
           business_hours: Json | null
           contact_email: string | null
           contact_phone: string | null
@@ -490,7 +762,10 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
+          pay_later_enabled: boolean | null
+          pay_later_mode: string | null
           settings: Json | null
+          slot_interval_minutes: number | null
           slug: string
           timezone: string | null
           updated_at: string | null
@@ -499,7 +774,12 @@ export type Database = {
         Insert: {
           address?: string | null
           allow_guest_checkout?: boolean | null
+          bank_account_holder?: string | null
+          bank_account_number?: string | null
+          bank_branch?: string | null
+          bank_name?: string | null
           branding?: Json | null
+          business_category?: string | null
           business_hours?: Json | null
           contact_email?: string | null
           contact_phone?: string | null
@@ -508,7 +788,10 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name: string
+          pay_later_enabled?: boolean | null
+          pay_later_mode?: string | null
           settings?: Json | null
+          slot_interval_minutes?: number | null
           slug: string
           timezone?: string | null
           updated_at?: string | null
@@ -517,7 +800,12 @@ export type Database = {
         Update: {
           address?: string | null
           allow_guest_checkout?: boolean | null
+          bank_account_holder?: string | null
+          bank_account_number?: string | null
+          bank_branch?: string | null
+          bank_name?: string | null
           branding?: Json | null
+          business_category?: string | null
           business_hours?: Json | null
           contact_email?: string | null
           contact_phone?: string | null
@@ -526,7 +814,10 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          pay_later_enabled?: boolean | null
+          pay_later_mode?: string | null
           settings?: Json | null
+          slot_interval_minutes?: number | null
           slug?: string
           timezone?: string | null
           updated_at?: string | null
@@ -541,8 +832,10 @@ export type Database = {
           email_verified: boolean | null
           full_name: string | null
           id: string
+          is_active: boolean | null
           permissions: Json | null
           phone: string | null
+          position: string | null
           roles: string[] | null
           tenant_id: string
           updated_at: string | null
@@ -553,8 +846,10 @@ export type Database = {
           email_verified?: boolean | null
           full_name?: string | null
           id: string
+          is_active?: boolean | null
           permissions?: Json | null
           phone?: string | null
+          position?: string | null
           roles?: string[] | null
           tenant_id: string
           updated_at?: string | null
@@ -565,8 +860,10 @@ export type Database = {
           email_verified?: boolean | null
           full_name?: string | null
           id?: string
+          is_active?: boolean | null
           permissions?: Json | null
           phone?: string | null
+          position?: string | null
           roles?: string[] | null
           tenant_id?: string
           updated_at?: string | null
@@ -589,9 +886,17 @@ export type Database = {
       get_current_tenant_id: { Args: never; Returns: string }
       get_current_user_role: { Args: never; Returns: string }
       is_admin: { Args: never; Returns: boolean }
+      is_owner: { Args: never; Returns: boolean }
       is_provider_or_admin: { Args: never; Returns: boolean }
     }
     Enums: {
+      booking_status:
+        | "pending"
+        | "confirmed"
+        | "cancelled"
+        | "rejected"
+        | "completed"
+        | "no_show"
       service_type: "consultation" | "class"
     }
     CompositeTypes: {
@@ -606,120 +911,128 @@ type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-  | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-  : never = never,
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
-  ? R
-  : never
+    ? R
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-    DefaultSchema["Views"])
-  ? (DefaultSchema["Tables"] &
-    DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-      Row: infer R
-    }
-  ? R
-  : never
-  : never
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-  | keyof DefaultSchema["Tables"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-    Insert: infer I
-  }
-  ? I
-  : never
+      Insert: infer I
+    }
+    ? I
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-    Insert: infer I
-  }
-  ? I
-  : never
-  : never
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-  | keyof DefaultSchema["Tables"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-    Update: infer U
-  }
-  ? U
-  : never
+      Update: infer U
+    }
+    ? U
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-    Update: infer U
-  }
-  ? U
-  : never
-  : never
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-  | keyof DefaultSchema["Enums"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-  : never
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-  | keyof DefaultSchema["CompositeTypes"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-  : never
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
 
 export const Constants = {
   public: {
     Enums: {
+      booking_status: [
+        "pending",
+        "confirmed",
+        "cancelled",
+        "rejected",
+        "completed",
+        "no_show",
+      ],
       service_type: ["consultation", "class"],
     },
   },

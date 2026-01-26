@@ -30,9 +30,9 @@ export interface ApiResponse<T> {
 export type UserRole = 'owner' | 'admin' | 'provider' | 'client';
 
 /**
- * Booking status enum
+ * Booking status enum (matches database enum)
  */
-export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
+export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'rejected' | 'completed' | 'no_show';
 
 /**
  * Service type enum (Consultations vs Classes)
@@ -109,3 +109,28 @@ export type ScheduleOverrideUpdate = TablesUpdate<'schedule_overrides'>;
 export type ProviderCalendar = Tables<'provider_calendars'>;
 export type ProviderCalendarInsert = TablesInsert<'provider_calendars'>;
 export type ProviderCalendarUpdate = TablesUpdate<'provider_calendars'>;
+
+// ============================================================
+// Booking types (Epic 4 - Availability Engine)
+// ============================================================
+
+/**
+ * Booking type alias
+ */
+export type Booking = Tables<'bookings'>;
+export type BookingInsert = TablesInsert<'bookings'>;
+export type BookingUpdate = TablesUpdate<'bookings'>;
+
+// ============================================================
+// Re-export availability types for convenience
+// ============================================================
+
+export type {
+    AvailabilityRequest,
+    AvailabilityResponse,
+    TimeSlot,
+    AvailableSlot,
+    DayAvailability,
+    SlotCheckRequest,
+    SlotCheckResponse,
+} from '@/lib/availability';

@@ -214,7 +214,7 @@ This document provides the complete epic and story breakdown for sheduleApp, dec
 
 ---
 
-### Story 2.10: Unified Sign-Up UX
+### Story 2.10: Unified Sign-Up UX ✅ DONE
 **Goal:** Ensure every sign-up point (Admin, Provider Invite, Client Checkout) gracefully handles "User already exists" by offering a clear "Sign In" option.
 
 **User Outcome:** Users who forget they have an account aren't blocked by confusing errors; they are guided to log in.
@@ -236,7 +236,23 @@ This document provides the complete epic and story breakdown for sheduleApp, dec
 
 ---
 
-### Epic 3: Embeddable Booking Widget
+
+### Story 2.11: UI Consistency Refinements ✅ DONE
+**Goal:** Align Admin UI with v2 requirements for Split Views and Filtering.
+
+**User Outcome:** Consistent navigation and filtering across Team, Providers, and Services pages.
+
+**Acceptance Criteria:**
+**Given** I am on the Team or Provider list page
+**Then** I see "Filter Tabs" above the list (All | Active | Pending/Invited)
+**And** clicking a tab filters the list instantly
+**And** the "Pending" section is no longer a collapsible accordion but a distinct tab
+
+**Given** I am on the Services page
+**Then** I see the "List + Detail Split View" layout (same as Team/Providers)
+**And** clicking a service opens the detail pane on the right
+**And** I can edit service details within this pane (or link to full edit from there)
+
 **Goal:** Business websites can embed a booking calendar widget that shows provider availability and accepts bookings.
 
 **User Outcome:** Admin generates embed code; clients book via iframe on business website.
@@ -505,7 +521,7 @@ const { hasFeature, enabledFeatures, isLoading } = useTenantFeatures();
 
 ## Epic 1: Project Foundation & Infrastructure
 
-### Story 1.1: Project Initialization
+### Story 1.1: Project Initialization ✅ DONE
 
 As a **developer**,
 I want **a Next.js 14 project with TypeScript, TailwindCSS, ESLint, and tRPC configured**,
@@ -525,7 +541,7 @@ So that **I have a solid foundation to build the application**.
 
 ---
 
-### Story 1.2: Supabase Setup & Connection
+### Story 1.2: Supabase Setup & Connection ✅ DONE
 
 As a **developer**,
 I want **Supabase connected to the application**,
@@ -545,7 +561,7 @@ So that **I can use PostgreSQL database and authentication services**.
 
 ---
 
-### Story 1.3: Multi-Tenant Database Schema
+### Story 1.3: Multi-Tenant Database Schema ✅ DONE
 
 As a **system administrator**,
 I want **multi-tenant data isolation enforced at the database level**,
@@ -564,7 +580,7 @@ So that **each tenant's data is completely isolated from other tenants** (FR57).
 
 ---
 
-### Story 1.4: Admin Registration & Tenant Creation ✅ UPDATED
+### Story 1.4: Admin Registration & Tenant Creation ✅ DONE
 
 As an **admin (first user)**,
 I want **to register and create my company account**,
@@ -597,7 +613,7 @@ So that **I can set up my business and invite team members** (FR11, FR57).
 
 ---
 
-### Story 1.5: User Registration (Google SSO)
+### Story 1.5: User Registration (Google SSO) ✅ DONE
 
 As a **client**,
 I want **to register using my Google account**,
@@ -619,7 +635,7 @@ So that **I can quickly create an account without remembering another password**
 
 ---
 
-### Story 1.6: User Login & Session
+### Story 1.6: User Login & Session ✅ DONE
 
 As a **registered user**,
 I want **to log in with my credentials**,
@@ -645,7 +661,7 @@ So that **I can access my account and bookings** (FR14).
 
 ---
 
-### Story 1.7: Password Reset
+### Story 1.7: Password Reset ✅ DONE
 
 As a **user who forgot their password**,
 I want **to reset my password via email**,
@@ -670,7 +686,7 @@ So that **I can regain access to my account** (FR15).
 
 ---
 
-### Story 1.8: RBAC Foundation
+### Story 1.8: RBAC Foundation ✅ DONE
 
 As a **system**,
 I want **role-based access control enforced**,
@@ -701,7 +717,7 @@ So that **users can only access features appropriate to their role** (FR55-FR56)
 
 ---
 
-### Story 1.9: GitHub & CI/CD Setup
+### Story 1.9: GitHub & CI/CD Setup ✅ DONE
 
 As a **developer**,
 I want **version control and automated CI/CD**,
@@ -728,7 +744,7 @@ So that **code changes are tested and deployed automatically**.
 
 ---
 
-### Story 1.10: Vercel Deployment
+### Story 1.10: Vercel Deployment ✅ DONE
 
 As a **team**,
 I want **the application deployed to Vercel**,
@@ -779,7 +795,7 @@ So that **my booking page reflects my business identity** (FR58, FR59).
 
 ---
 
-### Story 2.0.1: Streamlined Company Onboarding
+### Story 2.0.1: Streamlined Company Onboarding ✅ DONE
 **Goal:** Enforce the "Basic Essentials Only" setup flow to reduce initialization friction.
 
 **User Outcome:** Admin completes setup in < 60 seconds without decision fatigue.
@@ -889,7 +905,7 @@ So that **they can create their own accounts and join the company** (FR60).
 
 ---
 
-### Story 2.4.1: Enhanced Team Invitation Fields
+### Story 2.4.1: Enhanced Team Invitation Fields ✅ DONE
 **Goal:** Align Team invitation form with specific user requirements for role and contact info.
 
 **Pre-requisite:** Story 2.4 code structure.
@@ -1047,41 +1063,55 @@ So that **their external appointments block availability** (FR50).
 
 ---
 
-### Story 2.7: 4-Layer Availability Engine
+### Story 2.7: 5-Layer Availability Engine ✅ DONE
 
 As a **system**,
-I want **to compute available slots using 4-layer filtering**,
+I want **to compute available slots using 5-layer filtering**,
 So that **clients only see truly bookable times** (FR6-FR8).
+
+**Implementation Status:** Core engine implemented (Migration 027 + src/lib/availability/)
+
+**5-Layer Architecture:**
+| Layer | Scope | DB Table | Status |
+|-------|-------|----------|--------|
+| L1 | Service Schedule | `service_schedules` | Implemented |
+| L1.5 | Service Override | `service_schedule_overrides` | Implemented |
+| L2 | Provider Schedule | `provider_schedules` | Implemented |
+| L3 | Provider Override | `schedule_overrides` | Implemented |
+| L4 | Internal Bookings | `bookings` | Implemented (Migration 027) |
+| L5 | External Calendar | `provider_calendars` + API | Schema only (placeholder) |
+
+**Files Created:**
+- `supabase/migrations/027_bookings_schema.sql` - Bookings table with exclusion constraint
+- `src/lib/availability/` - Engine core (types, layers, utils)
+- `src/server/routers/availability.ts` - tRPC router (getSlots, checkSlot, getProvidersForSlot)
+- `src/server/routers/booking.ts` - tRPC router (create, getMyBookings, getAll, updateStatus, cancel)
 
 **Acceptance Criteria:**
 
 **Given** a request for provider X's availability for service Y on date Z
 **When** the availability engine runs
 **Then** Layer 1 checks: Is the service available on this day?
+**And** Layer 1.5 checks: Any service-level overrides for this date?
 **And** Layer 2 checks: Does the provider have scheduled time blocks?
-**And** Layer 3 checks: Are there any overrides for this date?
-**And** Layer 4 checks: Is the provider's Google Calendar free?
-**And** only slots passing ALL 4 layers are returned
+**And** Layer 3 checks: Are there any provider overrides for this date?
+**And** Layer 4 checks: Are there existing bookings blocking this slot?
+**And** Layer 5 checks: Is the provider's Google Calendar free? (placeholder)
+**And** only slots passing ALL layers are returned
 
-**Given** the provider's Google Calendar shows a meeting at 10:00
+**Given** the provider has an existing booking at 10:00
 **When** availability is computed
-**Then** the 10:00 slot is NOT returned
+**Then** the 10:00 slot is NOT returned (L4 conflict)
 
 **Given** Google Calendar API is unavailable
 **When** availability is computed
 **Then** the system returns cached availability with warning (NFR16)
 **And** response time remains < 500ms (NFR2)
 
-**Schema Prerequisites (Migration):**
-Before implementing this story, add to `services` table:
-- `min_notice_hours INTEGER DEFAULT 24` - How far ahead clients must book
-- `max_future_days INTEGER DEFAULT 60` - How far into future clients can book
-- `payment_requirement TEXT DEFAULT 'OPTIONAL'` - FULL / OPTIONAL / NONE
-
 **Booking Rule Validation:**
 **Given** a service has `min_notice_hours: 24`
 **When** a client tries to book a slot 2 hours from now
-**Then** the slot is NOT returned (fails Layer 1)
+**Then** the slot is NOT returned (fails date boundary check)
 
 **Given** a service has `max_future_days: 60`
 **When** a client views dates 90 days in the future
@@ -1290,7 +1320,7 @@ So that **I can manage bookings effectively on mobile**.
 
 ---
 
-### Story 2.8.2: Enhanced Responsive Admin Shell
+### Story 2.8.2: Enhanced Responsive Admin Shell ✅ DONE
 **Goal:** Enforce strict responsive behavior standards on top of the existing dashboard.
 
 **Pre-requisite:** Story 2.8 (Dashboard Shell).

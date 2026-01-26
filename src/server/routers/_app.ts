@@ -7,6 +7,8 @@ import { teamRouter } from './team';
 import { providerRouter } from './provider';
 import { scheduleRouter } from './schedule';
 import { bookingPageRouter } from './bookingPage';
+import { availabilityRouter } from './availability';
+import { bookingRouter } from './booking';
 
 /**
  * Root tRPC Router for sheduleApp
@@ -40,6 +42,12 @@ export const appRouter = router({
 
     // Booking Page router for public booking flow (Story 3.1)
     bookingPage: bookingPageRouter,
+
+    // Availability router for slot checking (Epic 4)
+    availability: availabilityRouter,
+
+    // Booking router for booking management (Epic 4)
+    booking: bookingRouter,
 
     /**
      * Health check endpoint
