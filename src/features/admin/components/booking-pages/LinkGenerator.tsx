@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,9 +16,8 @@ interface LinkGeneratorProps {
 export function LinkGenerator({ services, providers }: LinkGeneratorProps) {
     const [selectedService, setSelectedService] = useState<string>('all');
     const [selectedProvider, setSelectedProvider] = useState<string>('all');
-    const [generatedLink, setGeneratedLink] = useState('');
 
-    useEffect(() => {
+    const generatedLink = useMemo(() => {
         const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://app.shedule.com';
 
         const params = new URLSearchParams();
@@ -27,7 +26,7 @@ export function LinkGenerator({ services, providers }: LinkGeneratorProps) {
 
         // params.append('tenant', tenantId);
 
-        setGeneratedLink(`${baseUrl}/book?${params.toString()}`);
+        return `${baseUrl}/book?${params.toString()}`;
     }, [selectedService, selectedProvider]);
 
     const handleCopy = () => {

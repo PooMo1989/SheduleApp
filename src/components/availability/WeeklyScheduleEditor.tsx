@@ -69,6 +69,8 @@ export function WeeklyScheduleEditor({ baseSchedule, onScheduleChange, providerI
                 });
             }
         });
+        // Synchronizing external baseSchedule prop with local editable state
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setScheduleMap(map);
     }, [baseSchedule]);
 

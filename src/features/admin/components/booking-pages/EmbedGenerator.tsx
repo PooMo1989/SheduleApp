@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,10 +16,9 @@ export function EmbedGenerator({ services, providers }: EmbedGeneratorProps) {
     const [selectedService, setSelectedService] = useState<string>('all');
     const [selectedProvider, setSelectedProvider] = useState<string>('all');
     const [theme, setTheme] = useState<'light' | 'dark' | 'minimal'>('light');
-    const [embedCode, setEmbedCode] = useState('');
 
-    // Update embed code when selections change
-    useEffect(() => {
+    // Compute embed code from selections
+    const embedCode = useMemo(() => {
         const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://app.shedule.com';
 
         const params = new URLSearchParams();
@@ -31,9 +30,7 @@ export function EmbedGenerator({ services, providers }: EmbedGeneratorProps) {
         // params.append('tenant', tenantId);
 
         const url = `${baseUrl}/book?${params.toString()}`;
-        const code = `<iframe src="${url}" width="100%" height="600px" frameborder="0" style="border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);"></iframe>`;
-
-        setEmbedCode(code);
+        return `<iframe src="${url}" width="100%" height="600px" frameborder="0" style="border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);"></iframe>`;
     }, [selectedService, selectedProvider, theme]);
 
     const handleCopy = () => {
