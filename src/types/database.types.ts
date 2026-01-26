@@ -318,15 +318,18 @@ export type Database = {
           color: string | null
           created_at: string | null
           currency: string | null
+          custom_url_slug: string | null
           description: string | null
           display_order: number | null
           duration_minutes: number
           id: string
           image_url: string | null
           is_active: boolean | null
+          location_type: 'in_person' | 'virtual' | 'both' | null
           max_capacity: number | null
           name: string
           price: number
+          pricing_type: 'fixed' | 'variable' | 'starting_from' | 'free' | null
           service_type: Database["public"]["Enums"]["service_type"]
           tenant_id: string
           updated_at: string | null
@@ -338,15 +341,18 @@ export type Database = {
           color?: string | null
           created_at?: string | null
           currency?: string | null
+          custom_url_slug?: string | null
           description?: string | null
           display_order?: number | null
           duration_minutes: number
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          location_type?: 'in_person' | 'virtual' | 'both' | null
           max_capacity?: number | null
           name: string
           price: number
+          pricing_type?: 'fixed' | 'variable' | 'starting_from' | 'free' | null
           service_type?: Database["public"]["Enums"]["service_type"]
           tenant_id: string
           updated_at?: string | null
@@ -358,15 +364,18 @@ export type Database = {
           color?: string | null
           created_at?: string | null
           currency?: string | null
+          custom_url_slug?: string | null
           description?: string | null
           display_order?: number | null
           duration_minutes?: number
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          location_type?: 'in_person' | 'virtual' | 'both' | null
           max_capacity?: number | null
           name?: string
           price?: number
+          pricing_type?: 'fixed' | 'variable' | 'starting_from' | 'free' | null
           service_type?: Database["public"]["Enums"]["service_type"]
           tenant_id?: string
           updated_at?: string | null
