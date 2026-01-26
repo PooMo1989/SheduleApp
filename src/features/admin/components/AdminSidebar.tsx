@@ -14,6 +14,7 @@ import {
     User,
     ChevronLeft,
     ChevronRight,
+    Building2,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
 
@@ -51,6 +52,7 @@ const mainNavItems: NavItem[] = [
     { href: '/admin/providers', label: 'Providers', icon: UserCog },
     { href: '/admin/clients', label: 'Clients', icon: UsersRound },
     { href: '/admin/booking-pages', label: 'Booking Pages', icon: Link2 },
+    { href: '/admin/company', label: 'Company', icon: Building2 }, // Story 2.8.9: Separate Company sidebar item
     { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 

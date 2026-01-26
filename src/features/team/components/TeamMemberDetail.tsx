@@ -56,6 +56,21 @@ export function TeamMemberDetail({ memberId }: TeamMemberDetailProps) {
             content: <TeamMemberDetailsTab member={member} />,
         },
         {
+            id: 'management',
+            label: 'Management',
+            content: (
+                <div className="p-6">
+                    <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">Assigned Responsibilities</h3>
+                        <p className="text-gray-500 mb-4">Assign specific providers, services, and clients to this team member.</p>
+                        <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-md inline-block text-sm font-medium">
+                            Coming Soon in Phase 3
+                        </div>
+                    </div>
+                </div>
+            ),
+        },
+        {
             id: 'permissions',
             label: 'Permissions',
             content: <TeamMemberPermissionsTab member={member} />,
@@ -96,23 +111,21 @@ export function TeamMemberDetail({ memberId }: TeamMemberDetailProps) {
                             {member.roles?.map((role) => (
                                 <span
                                     key={role}
-                                    className={`px-2 py-0.5 text-xs rounded-full ${
-                                        role === 'admin'
+                                    className={`px-2 py-0.5 text-xs rounded-full ${role === 'admin'
                                             ? 'bg-purple-100 text-purple-700'
                                             : role === 'provider'
                                                 ? 'bg-blue-100 text-blue-700'
                                                 : 'bg-gray-100 text-gray-700'
-                                    }`}
+                                        }`}
                                 >
                                     {role.charAt(0).toUpperCase() + role.slice(1)}
                                 </span>
                             ))}
                             <span
-                                className={`px-2 py-0.5 text-xs rounded-full ${
-                                    member.isActive
+                                className={`px-2 py-0.5 text-xs rounded-full ${member.isActive
                                         ? 'bg-green-100 text-green-700'
                                         : 'bg-gray-100 text-gray-500'
-                                }`}
+                                    }`}
                             >
                                 {member.isActive ? 'Active' : 'Inactive'}
                             </span>

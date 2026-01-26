@@ -8,7 +8,7 @@
 - *(Future: Onboarding wizard to guide first-time setup)*
 
 ### 1.2 Company Setup
-- Owner navigates to **Settings > Company Info** in the sidebar
+- Owner navigates to **Company > General Info** in the sidebar
 - Fills in basic company information:
   - Company name
   - Logo upload
@@ -22,7 +22,7 @@
 - Owner understands these can be refined later and proceeds with minimal setup
 
 ### 1.3 Payment Configuration
-- Accessible from **Settings > Payments**
+- Accessible from **Company > Payments**
 - Configuration:
   | Field | Required | Notes |
   |-------|----------|-------|
@@ -108,8 +108,14 @@ The dashboard is the landing page after sign-in and provides an at-a-glance over
 - **X button** to return to the list view
 - **Tabs within individual member view:**
   1. **Details** - Personal info, contact details, position, status, profile photo
-  2. **Permissions** - Granular access level configuration
-  3. **Activity** - Recent actions/changes made by this member
+  2. **Management** - Overview of assigned responsibilities:
+     - Providers they manage
+     - Services they oversee
+     - Clients they handle
+  3. **Permissions** - Granular access level configuration
+  4. **Activity** - Recent actions/changes made by this member
+
+> **Note:** The Management tab enables future HR module features where team leads can have scoped visibility. For MVP, this tab can show "No assignments" with a note that assignment features are coming in a future release.
 
 ---
 
@@ -556,6 +562,7 @@ Team
 Providers
 Clients
 Booking Pages
+Company
 Settings
 ─────────────────
 Profile
@@ -583,6 +590,7 @@ Team
 Providers
 Clients
 Booking Pages
+Company
 Settings
 ─────────────────
 Profile
@@ -590,15 +598,25 @@ Profile
   └─ My Schedule/Availability
 ```
 
+### Company Sub-Tabs
+```
+Company
+  ├─ General Info (name, timezone, currency, slot intervals, business hours)
+  ├─ Branding (logo, colours)
+  ├─ Payments (bank details for SAAS reimbursement, pay later defaults)
+  └─ Notifications (email templates)
+```
+
+> **Note:** Company settings are tenant-specific configurations. This is where the business owner configures their company profile, branding, payment receiving details, and notification templates.
+
 ### Settings Sub-Tabs
 ```
 Settings
-  ├─ Company Info (name, timezone, currency, slot intervals, business hours)
-  ├─ Branding (logo, colours)
-  ├─ Payments (bank details, pay later defaults)
-  ├─ Notifications (email templates)
-  └─ Permissions (default role permissions)
+  ├─ Account (SAAS subscription, billing relationship with platform owner)
+  └─ Permissions (default role permissions for team members)
 ```
+
+> **Note:** Settings contains the relationship between the tenant (company owner) and the SAAS platform. Account sub-tab shows subscription status, usage, and billing. Permissions defines default access levels for new team members.
 
 ### Profile Sub-Tabs
 **For Owner/Admin:**
@@ -633,9 +651,12 @@ Same items as desktop, rendered as a full-screen overlay menu when hamburger ico
 | Providers | Yes | Yes | No |
 | Clients | Yes | Yes | Own only |
 | Booking Pages | Yes | Yes | No |
-| Settings | Yes | Yes (limited by permissions) | No |
+| Company | Yes | Yes (based on permissions) | No |
+| Settings | Yes | No (owner only) | No |
 | Schedule | No | No | Yes |
 | Profile | Yes | Yes | Yes |
+
+> **Note:** Settings (Account/SAAS relationship) is owner-only since it contains billing and subscription information. Company settings are accessible to admins with appropriate permissions.
 
 ---
 

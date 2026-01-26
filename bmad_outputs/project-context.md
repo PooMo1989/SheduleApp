@@ -121,6 +121,24 @@ When processing background jobs (emails, reminders):
 
 ---
 
+## UI Implementation Patterns (NEW)
+
+- **Navigation:** Use "List-Detail Split View" (List left 35%, Detail right 65%) for all entity management.
+- **Mobile:** Mobile views must use full-screen takeover for details.
+- **Tabs:** Max 3 primary tabs visible on mobile; use horizontal scrolling for additional tabs.
+
+## Business Logic Rules (NEW)
+
+- **Availability:** MUST use the 4-Layer Engine (Service Window → Provider Schedule → Date Overrides → Google Calendar Conflicts).
+- **Payment:** Centralized model (SAAS Platform collects funds). No per-tenant payment gateways.
+- **Provider Lifecycle:** Providers are `pending` until they (1) Accept Invitation AND (2) Are assigned at least one service.
+
+## Security Exceptions (NEW)
+
+- **Private Notes:** Strict Author-Only RLS. **Client Notes are visible ONLY to the provider who wrote them.** Even Ops/Admins CANNOT view these notes.
+
+---
+
 ## RBAC (Role-Based Access Control)
 
 ### Multiple Roles Per User
@@ -133,9 +151,10 @@ if (roles.includes('provider') || roles.includes('admin')) { ... }
 ```
 
 ### Role Hierarchy
-- **admin**: Full tenant management (team, services, settings, billing)
-- **provider**: Can be booked, manage own schedule, connect calendar
-- **client**: Book appointments, view own history
+- **owner**: Full super-admin access. Can delete company, delete users, and transfer ownership.
+- **admin**: Full tenant management (team, services, settings) but CANNOT delete company or other admins.
+- **provider**: Can be booked, manage own schedule, connect calendar.
+- **client**: Book appointments, view own history.
 
 ### Provider Profiles
 Providers are stored in the `providers` table with booking-specific data:
@@ -158,8 +177,12 @@ service_providers:
   - service_id (FK to services.id)
 ```
 
-### Granular Permissions (Post-MVP)
-For MVP, all admins have full permissions. Post-MVP, add:
+### Granular Permissions
+Permissions are stored in `users.permissions` JSONB column.
+```sql
+users.permissions: JSONB -- { "manage_team": true, "view_reports": false }
+```
+Middlewares and UI must check these specific keys, not just the 'admin' role.
 ```sql
 users.permissions: TEXT[] -- ['manage_team', 'manage_services', 'view_reports']
 ```

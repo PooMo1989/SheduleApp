@@ -95,6 +95,47 @@ These are generic components used across 10+ pages. Building them once prevents 
 
 ---
 
+### TIER 6.1: Navigation & Settings Restructure (v3 Alignment)
+
+This tier addresses gaps between user-flow-v2.md notes and v3 implementation.
+
+| Order | Story | Title | Depends On |
+|-------|-------|-------|------------|
+| 17.1 | **2.8.9** | Separate Company Sidebar Item | 2.8.4 |
+| 17.2 | **2.8.10** | Company Sub-Tabs (General Info, Branding, Payments, Notifications) | 2.8.9, 2.8.7 |
+| 17.3 | **2.8.11** | Settings Restructure (Account tab for SAAS relationship) | 2.8.9 |
+| 17.4 | **2.4.8** | Team Member Management Tab (assigned providers/services/clients) | 2.4.5 |
+
+**Story Details:**
+
+**2.8.9 - Separate Company Sidebar Item:**
+- Add "Company" as a new sidebar item between "Booking Pages" and "Settings"
+- Company contains tenant-specific business configuration
+- Visible to Owner and Admin (with permissions)
+
+**2.8.10 - Company Sub-Tabs:**
+- Move Company Info, Branding, Payments (bank details), Notifications from Settings to Company
+- Tab 1: General Info (name, timezone, currency, slot intervals, business hours)
+- Tab 2: Branding (logo, colours)
+- Tab 3: Payments (bank details for SAAS reimbursement, pay later defaults)
+- Tab 4: Notifications (email templates)
+
+**2.8.11 - Settings Restructure:**
+- Settings becomes the SAAS relationship hub (owner-only)
+- Tab 1: Account (subscription status, usage, billing with SAAS platform)
+- Tab 2: Permissions (default role permissions for new team members)
+- Note: Account tab content is placeholder until SAAS billing is implemented
+
+**2.4.8 - Team Member Management Tab:**
+- Add "Management" tab to TeamMemberDetail between Details and Permissions
+- Shows: Assigned Providers, Assigned Services, Assigned Clients
+- For MVP: Display "No assignments - feature coming soon" placeholder
+- Prepares UI structure for future HR module (Phase 3)
+
+**Why 6.1:** These changes align the implementation with the user's original v2 notes that were missed in v3. The Company vs Settings separation is critical for distinguishing tenant configuration from SAAS platform relationship.
+
+---
+
 ### TIER 7: Provider Admin Management (New page)
 
 | Order | Story | Title | Depends On |
@@ -170,6 +211,11 @@ TIER 6 (Services) ────────────────│───�
   2.3.1 ←─────────────────────────┘
   3.4.1
 
+TIER 6.1 (Nav Restructure) ──────────────────────────────────────────
+  2.8.9 → 2.8.10
+          2.8.11
+  2.4.8 (depends on 2.4.5)
+
 TIER 7 (Providers Page) ──────────────────────────────────────────────
   2.8.5
 
@@ -212,13 +258,14 @@ If you have multiple developers, these groups can run simultaneously:
 | 4 | 3 | Team rework | Tier 1 + Tier 2 |
 | 5 | 1 | Settings consolidation | Tier 1 + Tier 2 |
 | 6 | 2 | Service portal | Tier 1 + Tier 2 |
+| 6.1 | 4 | Company/Settings restructure | Tier 5 + Tier 6 |
 | 7 | 1 | Providers page | Tier 1 + Tier 2 |
 | 8 | 2 | Provider self-service | Tier 3 |
 | 9 | 2 | Booking pages | Epic 3 skeleton |
 | 10 | 7 | Post-booking features | Epic 3 complete |
-| **Total** | **29** | | |
+| **Total** | **33** | | |
 
-**Critical Path (longest chain):** Tier 1 → Tier 2 → Tier 3 → Tier 6 → Tier 9 → Epic 3 → Tier 10
+**Critical Path (longest chain):** Tier 1 → Tier 2 → Tier 3 → Tier 6 → Tier 6.1 → Tier 9 → Epic 3 → Tier 10
 
 **Quick Wins (no dependencies, can start today):**
 - All 5 Tier 1 schema migrations

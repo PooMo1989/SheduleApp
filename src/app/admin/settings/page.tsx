@@ -1,56 +1,34 @@
 'use client';
 
 import {
-    CompanyProfileForm,
-    BusinessHoursForm,
-    BrandingForm,
-    SettingsPaymentsTab,
-    SettingsNotificationsTab,
     SettingsPermissionsTab,
 } from '@/features/admin/components';
 import { HorizontalTabs } from '@/components/common';
 
 /**
- * Admin Settings Page (Tabbed)
- * Story 2.8.7: Unified Settings page with sub-tabs
+ * Admin Settings Page (Restructured)
+ * Story 2.8.11: SaaS Relationship Hub
  *
  * Tabs:
- * 1. Company Info - CompanyProfileForm + BusinessHoursForm
- * 2. Branding - BrandingForm
- * 3. Payments - Bank details, pay later config
- * 4. Notifications - Email templates (placeholder)
- * 5. Permissions - Default role permissions (placeholder)
+ * 1. Account - SaaS billing/subscription status (Placeholder)
+ * 2. Permissions - Default role permissions
  */
 export default function AdminSettingsPage() {
     const tabs = [
         {
-            id: 'company',
-            label: 'Company Info',
+            id: 'account',
+            label: 'Account',
             content: (
-                <div className="p-6 space-y-8 max-w-4xl">
-                    <CompanyProfileForm />
-                    <BusinessHoursForm />
+                <div className="p-6">
+                    <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">My Subscription</h3>
+                        <p className="text-gray-500 mb-4">Manage your subscription and billing with the platform.</p>
+                        <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-md inline-block text-sm font-medium">
+                            Coming Soon in Phase 4
+                        </div>
+                    </div>
                 </div>
             ),
-        },
-        {
-            id: 'branding',
-            label: 'Branding',
-            content: (
-                <div className="p-6 max-w-4xl">
-                    <BrandingForm />
-                </div>
-            ),
-        },
-        {
-            id: 'payments',
-            label: 'Payments',
-            content: <SettingsPaymentsTab />,
-        },
-        {
-            id: 'notifications',
-            label: 'Notifications',
-            content: <SettingsNotificationsTab />,
         },
         {
             id: 'permissions',
@@ -66,13 +44,13 @@ export default function AdminSettingsPage() {
                 <div className="mb-6">
                     <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
                     <p className="text-gray-500 mt-1">
-                        Configure your company profile, branding, payments, and notifications.
+                        Manage your account subscription and system permissions.
                     </p>
                 </div>
 
                 {/* Tabbed Content */}
                 <div className="bg-white rounded-lg border border-gray-200 min-h-[600px]">
-                    <HorizontalTabs tabs={tabs} defaultTab="company" />
+                    <HorizontalTabs tabs={tabs} defaultTab="account" />
                 </div>
             </div>
         </div>

@@ -1346,6 +1346,62 @@ So that **I can manage bookings effectively on mobile**.
 
 ---
 
+---
+
+### Story 2.8.9: Separate Company Sidebar Item ✅ DONE
+
+As an **admin**,
+I want **a dedicated Company sidebar item**,
+So that **I can access tenant configuration separately from SaaS settings**.
+
+**Acceptance Criteria:**
+**Given** I am logged in as admin
+**When** I view the sidebar
+**Then** I see "Company" between "Booking Pages" and "Settings"
+**And** it links to `/admin/company`
+
+---
+
+### Story 2.8.10: Company Sub-Tabs ✅ DONE
+
+As an **admin**,
+I want **all business configuration in one place**,
+So that **I can manage general info, branding, payments, and notifications**.
+
+**Acceptance Criteria:**
+**Given** I access `/admin/company`
+**When** the page loads
+**Then** I see tabs: General Info, Branding, Payments, Notifications
+**And** I can edit all respective forms
+
+---
+
+### Story 2.8.11: Settings Restructure ✅ DONE
+
+As an **admin**,
+I want **SaaS settings separated from business settings**,
+So that **I clearly distinguish between my subscription and my business operations**.
+
+**Acceptance Criteria:**
+**Given** I access `/admin/settings`
+**Then** I only see "Account" (SaaS Billing) and "Permissions"
+**And** Company/Branding tabs are removed (moved to Company page)
+
+---
+
+### Story 2.4.8: Team Member Management Tab ✅ DONE
+
+As an **admin**,
+I want **a Management tab for team members**,
+So that **I can prepare for future assignment features**.
+
+**Acceptance Criteria:**
+**Given** I view a Team Member's details
+**When** I click "Management"
+**Then** I see the placeholder for future assignments
+
+---
+
 ## Epic 3: Embeddable Booking Widget
 
 ### Story 3.1: Embeddable Calendar Widget
