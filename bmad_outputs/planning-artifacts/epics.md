@@ -3060,7 +3060,7 @@ So that **I can set when I'm available for bookings**.
 
 ---
 
-### Story 9.2.1: Booking Pages Configuration
+### Story 9.2.1: Booking Pages Configuration ✅ DONE
 
 As an **owner/admin**,
 I want **to generate embed codes and direct booking links**,
@@ -3315,7 +3315,7 @@ So that **the admin Clients page can query and display client data**.
 
 ## Widget & Booking Infrastructure Adjustments
 
-### Story 3.2.1: Direct Link Generation Tab
+### Story 3.2.1: Direct Link Generation Tab ✅ DONE
 
 As an **owner/admin**,
 I want **to generate shareable direct booking links in addition to embed codes**,
