@@ -60,15 +60,17 @@ export const providerRouter = router({
         }),
 
     /**
-     * Update provider profile (bio, photo, display name)
-     * Per spec: edit Bio, Photo, Display Name
+     * Update provider profile (bio, photo, display name, etc)
      */
-    updateProfile: adminProcedure
+    update: adminProcedure
         .input(z.object({
             id: z.string().uuid(),
             name: z.string().min(1).max(100).optional(),
             bio: z.string().max(1000).optional(),
+            phone: z.string().optional(),
             photo_url: z.string().url().nullable().optional(),
+            specialization: z.string().optional(),
+            schedule_autonomy: z.enum(['self_managed', 'approval_required']).optional(),
         }))
         .mutation(async ({ ctx, input }) => {
             const { id, ...updateData } = input;
@@ -95,39 +97,76 @@ export const providerRouter = router({
         }),
 
     /**
-     * Assign provider to services
-     * Per spec: assign them to specific Services
+     * Get services assigned to a provider
      */
-    assignServices: adminProcedure
+    getAssignedServices: protectedProcedure
+        .input(z.object({ providerId: z.string().uuid() }))
+        .query(async ({ ctx, input }) => {
+            const { data, error } = await ctx.supabase
+                .from('service_providers')
+                .select(`
+                    service:services(id, name, duration_minutes, price, description)
+                `)
+                .eq('provider_id', input.providerId);
+
+            if (error) {
+                throw new TRPCError({
+                    code: 'INTERNAL_SERVER_ERROR',
+                    message: 'Failed to fetch assigned services',
+                    cause: error,
+                });
+            }
+
+            // Flatten the response to return Service objects
+            // Supabase returns { service: { ... } }
+            return data?.map((item: any) => item.service) || [];
+        }),
+
+    /**
+     * Update single service assignment (toggle)
+     */
+    updateServiceAssignment: adminProcedure
         .input(z.object({
             providerId: z.string().uuid(),
-            serviceIds: z.array(z.string().uuid()),
+            serviceId: z.string().uuid(),
+            assigned: z.boolean(),
         }))
         .mutation(async ({ ctx, input }) => {
-            const { providerId, serviceIds } = input;
+            const { providerId, serviceId, assigned } = input;
 
-            // First, remove all existing service assignments
-            await ctx.supabase
-                .from('service_providers')
-                .delete()
-                .eq('provider_id', providerId);
-
-            // Then, add new assignments
-            if (serviceIds.length > 0) {
-                const assignments = serviceIds.map(serviceId => ({
-                    provider_id: providerId,
-                    service_id: serviceId,
-                    tenant_id: ctx.tenantId,
-                }));
-
+            if (assigned) {
+                // Insert if not exists
                 const { error } = await ctx.supabase
                     .from('service_providers')
-                    .insert(assignments);
+                    .upsert({
+                        provider_id: providerId,
+                        service_id: serviceId,
+                        tenant_id: ctx.tenantId,
+                    }, { onConflict: 'provider_id,service_id' }); // Assuming composite key/unique constraint exists
+
+                // If onConflict fails because constraints aren't set up for unique (provider, service), 
+                // we should check existence first or use insert with ignore.
+                // Standard setup usually has unique constraint.
 
                 if (error) {
                     throw new TRPCError({
                         code: 'INTERNAL_SERVER_ERROR',
-                        message: 'Failed to assign services',
+                        message: 'Failed to assign service',
+                        cause: error,
+                    });
+                }
+            } else {
+                // Delete
+                const { error } = await ctx.supabase
+                    .from('service_providers')
+                    .delete()
+                    .eq('provider_id', providerId)
+                    .eq('service_id', serviceId);
+
+                if (error) {
+                    throw new TRPCError({
+                        code: 'INTERNAL_SERVER_ERROR',
+                        message: 'Failed to unassign service',
                         cause: error,
                     });
                 }
@@ -136,9 +175,8 @@ export const providerRouter = router({
             return { success: true };
         }),
 
-    /**
-     * Get providers assigned to a specific service
-     */
+    // Legacy method maintained if needed, or removed.
+    // keeping getByService for reverse lookup if needed elsewhere.
     getByService: protectedProcedure
         .input(z.object({ serviceId: z.string().uuid() }))
         .query(async ({ ctx, input }) => {

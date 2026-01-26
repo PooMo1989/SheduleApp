@@ -302,12 +302,13 @@ export const teamRouter = router({
             name: z.string().min(1, 'Name is required'),
             phone: z.string().optional(),
             position: z.string().optional(),
+            roles: z.array(z.enum(validRoles)).optional(),
         }))
         .mutation(async ({ ctx, input }) => {
             const { name, phone, position } = input;
             const email = input.email.toLowerCase();
-            // v3: All team members are admins by default
-            const roles: Role[] = ['admin'];
+            // Default to admin if not specified (backward compatibility)
+            const roles: Role[] = input.roles || ['admin'];
 
             // Check if there's already a pending invitation
             const { data: existingInvite } = await ctx.supabase
