@@ -6,7 +6,7 @@
 
 import type { TimeSlot, TimeRange } from '../types';
 import { addMinutes, getDurationMinutes, timeToMinutes, minutesToTime } from './timeRange';
-import { createDateTimeInTimezone, formatTimeInTimezone } from './timezone';
+import { createDateTimeInTimezone } from './timezone';
 
 /**
  * Generate time slots for a given day within available windows

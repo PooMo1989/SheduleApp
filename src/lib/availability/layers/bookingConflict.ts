@@ -1,6 +1,6 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { BookingRecord, TimeSlot } from '../types';
+import type { BookingRecord } from '../types';
 
 /**
  * Fetch bookings for providers within a date range

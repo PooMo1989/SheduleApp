@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
 import { trpc } from '@/lib/trpc/client';
 import { SearchFilterBar, HorizontalTabs } from '@/components/common';
+import Image from 'next/image';
 
 interface TeamListProps {
     onSelectMember?: (memberId: string) => void;
@@ -18,7 +18,7 @@ export function TeamList({ onSelectMember, selectedMemberId }: TeamListProps) {
     const { data, isLoading, error } = trpc.team.getMembers.useQuery();
     const utils = trpc.useUtils();
     const [searchQuery, setSearchQuery] = useState('');
-    const [pendingExpanded, setPendingExpanded] = useState(true);
+    // const [pendingExpanded, setPendingExpanded] = useState(true);
 
     const updateMember = trpc.team.updateMember.useMutation({
         onSuccess: () => {
@@ -125,10 +125,12 @@ export function TeamList({ onSelectMember, selectedMemberId }: TeamListProps) {
                         <div className="flex items-center gap-3">
                             {/* Avatar */}
                             {member.avatarUrl ? (
-                                <img
+                                <Image
                                     src={member.avatarUrl}
                                     alt={member.name || ''}
-                                    className="w-10 h-10 rounded-full object-cover"
+                                    width={40}
+                                    height={40}
+                                    className="rounded-full object-cover"
                                 />
                             ) : (
                                 <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">

@@ -20,7 +20,7 @@ import type {
     LayerData,
     SlotCheckRequest,
     SlotCheckResponse,
-    ServiceContext,
+    SlotCheckResponse,
     TenantConfig,
     ProviderContext,
 } from './types';
@@ -51,7 +51,6 @@ import {
     fetchBookings,
     indexBookingsByProvider,
     hasBookingConflict,
-    calculateAllBookingCounts,
 } from './layers/bookingConflict';
 import {
     fetchProviderCalendarConfigs,
@@ -68,7 +67,6 @@ import {
     addDays,
 } from './utils/timezone';
 import { generateSlots, filterByMinNotice } from './utils/slotGrid';
-import { selectProvider } from './utils/providerAssignment';
 
 /**
  * Main availability calculation function
@@ -233,8 +231,27 @@ export async function getProvidersForSlot(
         return [];
     }
 
-    const slotStart = new Date(startTime);
-    const slotEnd = new Date(endTime);
+    // L4: Check booking conflicts
+    // booking conflict check already uses slotStart/slotEnd derived locally inside the loop if needed
+    // BUT wait, in the original code:
+    // const slotStart = new Date(slot.startTime);
+    // const slotEnd = new Date(slot.endTime);
+    // These ARE used in hasBookingConflict.
+    // Why did linter say unused?
+    // Ah, line 237/238 in the original might be different from what I see or I misread line numbers.
+    // Let's look at the original file content from Step 900.
+    // Lines 554/555 define slotStart/slotEnd.
+    // Lines 237/238 in the WARNING log refer to `slotStart` being unused?
+    // Wait, the warning log says: src/lib/availability/engine.ts:237:11 warning 'slotStart' unused.
+    // Let's look at line 237 in Step 900.
+    // Step 900 shows line 237 inside `getProvidersForSlot`.
+    // const slotStart = new Date(startTime);
+    // const slotEnd = new Date(endTime);
+    // They are used in lines 260/261?
+    // .lt('start_time', endTime) .gt('end_time', startTime) used the arguments, NOT slotStart/slotEnd.
+    // Oh, I see. `getProvidersForSlot` uses `startTime` string directly.
+
+    // So removing them from getProvidersForSlot:
     const dateStr = startTime.split('T')[0];
 
     const availableProviders: ProviderContext[] = [];
@@ -504,14 +521,15 @@ function processSingleDay(
     }
 
     // Calculate booking counts for provider selection
-    const bookingCounts = calculateAllBookingCounts(
-        layerData.bookingsByProvider,
-        providerIds
-    );
+    // Calculate booking counts for provider selection (if needed)
+    // const bookingCounts = calculateAllBookingCounts(
+    //     layerData.bookingsByProvider,
+    //     providerIds
+    // );
 
     // Process each provider
     const allSlots: AvailableSlot[] = [];
-    let slotIndex = 0;
+    // let slotIndex = 0;
 
     for (const providerId of providerIds) {
         // L2: Get provider schedule and intersect with service
@@ -588,7 +606,7 @@ function processSingleDay(
                 availableProviderIds: context.requestedProviderId ? undefined : [providerId],
             });
 
-            slotIndex++;
+            // slotIndex++;
         }
     }
 

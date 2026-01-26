@@ -1,6 +1,6 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { CalendarEvent, TimeSlot } from '../types';
+import type { CalendarEvent } from '../types';
 import { google } from 'googleapis';
 import { getOAuthClient } from '@/lib/google/auth';
 
@@ -79,7 +79,7 @@ export async function fetchCalendarEvents(
 
             // Check if expired and refresh explicitly to save new token
             if (Date.now() > (oauth2Client.credentials.expiry_date || 0)) {
-                const { credentials } = await oauth2Client.refreshAccessToken();
+                await oauth2Client.refreshAccessToken();
                 // TODO: Async update DB with new tokens (fire and forget)
                 // For now, relies on session validity.
             }

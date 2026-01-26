@@ -17,16 +17,16 @@ export function parseInTimezone(dateStr: string, timezone: string): Date {
     }
 
     // For date-only strings, create a date at midnight in the specified timezone
-    const formatter = new Intl.DateTimeFormat('en-US', {
-        timeZone: timezone,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-    });
+    // const formatter = new Intl.DateTimeFormat('en-US', {
+    //     timeZone: timezone,
+    //     year: 'numeric',
+    //     month: '2-digit',
+    //     day: '2-digit',
+    //     hour: '2-digit',
+    //     minute: '2-digit',
+    //     second: '2-digit',
+    //     hour12: false,
+    // });
 
     return date;
 }
@@ -78,7 +78,7 @@ export function createDateTimeInTimezone(
 
     // Create a date string that JavaScript can parse
     // We'll use the temporal API pattern for clarity
-    const isoString = `${dateStr}T${timeStr.padStart(5, '0')}:00`;
+    // const isoString = `${dateStr}T${timeStr.padStart(5, '0')}:00`;
 
     // Create a formatter to get the offset for this timezone at this date/time
     const tempDate = new Date(`${dateStr}T12:00:00Z`); // Use noon to avoid DST edge cases
