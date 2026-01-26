@@ -203,14 +203,14 @@ This document provides the complete epic and story breakdown for sheduleApp, dec
 
 ---
 
-### Epic 2: Admin Service & Provider Management
+### Epic 2: Admin Service & Provider Management ✅ DONE
 **Goal:** Admin can create services, providers, set availability schedules, and connect Google Calendar.
 
 **User Outcome:** Anita can configure all services and providers before embedding.
 
 **Covers:** FR43-FR50, FR58-FR60
 
-**Stories:** 2.1-2.6 (DB schemas, Admin CRUD, Google Calendar, Availability Engine)
+**Stories:** 2.1-2.9 (DB schemas, Admin CRUD, Google Calendar, Availability Engine, Impersonation, Responsive UI)
 
 ---
 

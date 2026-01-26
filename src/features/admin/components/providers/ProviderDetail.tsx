@@ -5,7 +5,7 @@ import { trpc } from '@/lib/trpc/client';
 import { ProviderDetailsTab } from './ProviderDetailsTab';
 import { ProviderServicesTab } from './ProviderServicesTab';
 import { ProviderScheduleTab } from './ProviderScheduleTab';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye } from 'lucide-react';
 
 interface ProviderDetailProps {
     providerId: string;
@@ -71,7 +71,17 @@ export function ProviderDetail({ providerId }: ProviderDetailProps) {
                     <h2 className="text-lg font-bold text-gray-900">{provider.name}</h2>
                     <p className="text-sm text-gray-500">{provider.specialization || 'Service Provider'}</p>
                 </div>
-                <div className="ml-auto">
+                <div className="ml-auto flex items-center gap-2">
+                    <a
+                        href={`/admin/impersonate/${provider.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-orange-700 bg-orange-50 border border-orange-200 rounded-md hover:bg-orange-100 transition-colors"
+                        title="View portal as this provider"
+                    >
+                        <Eye className="w-3.5 h-3.5" />
+                        View as Provider
+                    </a>
                     <span className={`px-2 py-1 rounded text-xs font-medium ${provider.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
                         }`}>
                         {provider.is_active ? 'Active' : 'Inactive'}

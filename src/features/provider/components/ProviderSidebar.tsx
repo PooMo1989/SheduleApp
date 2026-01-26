@@ -9,23 +9,31 @@ import {
     User,
     ChevronLeft,
     ChevronRight,
+    LayoutDashboard,
 } from 'lucide-react';
 
 /**
- * Provider sidebar navigation items
- * Based on user-flow-v3.md Section 8.2
+ * Provider sidebar navigation items generator
  */
-const navItems = [
-    { href: '/provider/appointments', label: 'Appointments', icon: Calendar },
-    { href: '/provider/schedule', label: 'Schedule', icon: Clock },
-    { href: '/provider/clients', label: 'Clients', icon: Users },
-    { href: '/provider/profile', label: 'Profile', icon: User },
+const getNavItems = (basePath: string) => [
+    // { href: `${basePath}/dashboard`, label: 'Dashboard', icon: LayoutDashboard }, // Dashboard is effectively appointments for now? Story 6.0 says dashboard can be today's appointments.
+    // Actually the Provider Portal structure has /provider/dashboard but sidebar didn't link it?
+    // Let's check the original sidebar again in Step 1100.
+    // Original navItems: Appointments, Schedule, Clients, Profile. No Dashboard link.
+    // user-flow-v3 says "Provider Dashboard" allows viewing today's appointments.
+    // Usually /provider is the dashboard.
+    // Let's stick to the 4 items: Appointments, Schedule, Clients, Profile.
+    { href: `${basePath}/appointments`, label: 'Appointments', icon: Calendar },
+    { href: `${basePath}/schedule`, label: 'Schedule', icon: Clock },
+    { href: `${basePath}/clients`, label: 'Clients', icon: Users },
+    { href: `${basePath}/profile`, label: 'Profile', icon: User },
 ];
 
 interface ProviderSidebarProps {
     collapsed?: boolean;
     onToggle?: () => void;
     companyName?: string;
+    basePath?: string; // e.g. "/provider" or "/admin/impersonate/[id]"
 }
 
 /**
@@ -34,8 +42,14 @@ interface ProviderSidebarProps {
  * Navigation sidebar for provider portal with responsive collapse support.
  * Follows the same design patterns as AdminSidebar for consistency.
  */
-export function ProviderSidebar({ collapsed = false, onToggle, companyName }: ProviderSidebarProps) {
+export function ProviderSidebar({
+    collapsed = false,
+    onToggle,
+    companyName,
+    basePath = '/provider'
+}: ProviderSidebarProps) {
     const pathname = usePathname();
+    const navItems = getNavItems(basePath);
 
     return (
         <aside
@@ -107,3 +121,4 @@ export function ProviderSidebar({ collapsed = false, onToggle, companyName }: Pr
         </aside>
     );
 }
+
