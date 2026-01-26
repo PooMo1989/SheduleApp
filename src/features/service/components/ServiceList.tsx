@@ -7,7 +7,17 @@ import { trpc } from '@/lib/trpc/client';
  * Service List Component
  * Story 2.3.1: Display list of services with links to portal
  */
-export function ServiceList() {
+interface ServiceListProps {
+    onSelect?: (id: string) => void;
+    selectedId?: string | null;
+}
+
+/**
+ * Service List Component
+ * Story 2.3.1: Display list of services with links to portal
+ * Refactored for Story 2.11: Support selection for Split View
+ */
+export function ServiceList({ onSelect, selectedId }: ServiceListProps) {
     const { data: services, isLoading, error } = trpc.service.getAll.useQuery();
     const utils = trpc.useUtils();
 
@@ -85,13 +95,17 @@ export function ServiceList() {
                     {services?.map(service => (
                         <div
                             key={service.id}
-                            className="bg-white border rounded-lg p-4 hover:shadow-md transition-shadow"
+                            onClick={() => onSelect?.(service.id)}
+                            className={`
+                                bg-white border rounded-lg p-4 transition-all cursor-pointer
+                                ${selectedId === service.id
+                                    ? 'border-teal-500 ring-1 ring-teal-500 shadow-md'
+                                    : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                                }
+                            `}
                         >
                             <div className="flex items-start justify-between">
-                                <Link
-                                    href={`/admin/services/${service.id}/edit`}
-                                    className="flex-1 group"
-                                >
+                                <div className="flex-1 group">
                                     <h3 className="font-medium text-gray-900 group-hover:text-teal-600 transition-colors">
                                         {service.name}
                                     </h3>
@@ -108,18 +122,19 @@ export function ServiceList() {
                                         </span>
                                         <span className="text-gray-300">•</span>
                                         <span className={`capitalize ${service.service_type === 'class'
-                                                ? 'text-purple-600'
-                                                : 'text-blue-600'
+                                            ? 'text-purple-600'
+                                            : 'text-blue-600'
                                             }`}>
                                             {service.service_type}
                                         </span>
                                     </div>
-                                </Link>
+                                </div>
 
                                 {/* Actions */}
                                 <div className="flex items-center gap-2 ml-4">
                                     <Link
                                         href={`/admin/services/${service.id}/edit`}
+                                        onClick={(e) => e.stopPropagation()} // Prevent selecting row when clicking edit
                                         className="p-2 text-gray-400 hover:text-teal-600 transition-colors"
                                         title="Edit"
                                     >
@@ -128,7 +143,10 @@ export function ServiceList() {
                                         </svg>
                                     </Link>
                                     <button
-                                        onClick={() => handleDelete(service.id, service.name)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDelete(service.id, service.name);
+                                        }}
                                         disabled={deleteService.isPending}
                                         className="p-2 text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50"
                                         title="Delete"

@@ -1035,17 +1035,24 @@ So that **users and companies can upload photos while maintaining portability**.
 
 ---
 
-### Story 2.6: Google Calendar OAuth
+### Story 2.6: Google Calendar OAuth ✅ DONE
 
 As an **admin**,
 I want **to connect a provider's Google Calendar**,
 So that **their external appointments block availability** (FR50).
+
+**Implementation Status:** ✅ Complete
+- **Backend:** `src/app/api/auth/callback/google-calendar` handles OAuth flow.
+- **Frontend:** "Connect Google Calendar" button in Provider Schedule tab.
+- **Database:** `provider_calendars` table stores secure tokens.
 
 **Acceptance Criteria:**
 
 **Given** I am on the provider edit page
 **When** I click "Connect Google Calendar"
 **Then** I am redirected to Google OAuth consent screen
+
+**Given** the provider grants calendar access
 
 **Given** the provider grants calendar access
 **When** OAuth completes
@@ -1060,6 +1067,10 @@ So that **their external appointments block availability** (FR50).
 **Given** a provider disconnects their calendar
 **When** they click "Disconnect"
 **Then** tokens are deleted from the database
+
+**Deployment Note:**
+- Initially use Google Console "Testing" mode (requires manual test user add).
+- **TODO Post-MVP:** Submit for Google App Verification to allow public access (Story 2.6.1).
 
 ---
 
@@ -1079,7 +1090,11 @@ So that **clients only see truly bookable times** (FR6-FR8).
 | L2 | Provider Schedule | `provider_schedules` | Implemented |
 | L3 | Provider Override | `schedule_overrides` | Implemented |
 | L4 | Internal Bookings | `bookings` | Implemented (Migration 027) |
-| L5 | External Calendar | `provider_calendars` + API | Schema only (placeholder) |
+**Implementation Status:** ✅ Complete
+- **Layer 1-3:** Service & Provider Schedules + Overrides.
+- **Layer 4:** Internal Bookings (conflict checking with buffers).
+- **Layer 5:** Google Calendar Real-Time Check (via `googleapis`).
+- **Orchestrator:** `src/lib/availability/engine.ts`.
 
 **Files Created:**
 - `supabase/migrations/027_bookings_schema.sql` - Bookings table with exclusion constraint
@@ -1096,7 +1111,7 @@ So that **clients only see truly bookable times** (FR6-FR8).
 **And** Layer 2 checks: Does the provider have scheduled time blocks?
 **And** Layer 3 checks: Are there any provider overrides for this date?
 **And** Layer 4 checks: Are there existing bookings blocking this slot?
-**And** Layer 5 checks: Is the provider's Google Calendar free? (placeholder)
+**And** Layer 5 checks: Is the provider's Google Calendar free?
 **And** only slots passing ALL layers are returned
 
 **Given** the provider has an existing booking at 10:00

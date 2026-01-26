@@ -257,6 +257,75 @@ export const providerRouter = router({
 
         return data;
     }),
+
+    /**
+     * Google Calendar Integration
+     * ---------------------------
+     */
+
+    /**
+     * Get Google OAuth Authorization URL
+     */
+    getGoogleAuthUrl: protectedProcedure
+        .input(z.object({ providerId: z.string().uuid() }))
+        .query(async ({ input }) => {
+            const { getAuthUrl } = await import('@/lib/google/auth');
+            return { url: getAuthUrl(input.providerId) };
+        }),
+
+    /**
+     * Get Calendar Connection Status
+     */
+    getCalendarStatus: protectedProcedure
+        .input(z.object({ providerId: z.string().uuid() }))
+        .query(async ({ ctx, input }) => {
+            const { data, error } = await ctx.supabase
+                .from('provider_calendars')
+                .select('google_calendar_id, sync_enabled, last_synced_at')
+                .eq('provider_id', input.providerId)
+                .single();
+
+            if (error && error.code !== 'PGRST116') { // PGRST116 is "No Data" (Row not found)
+                console.error('Error fetching calendar status:', error);
+                throw new TRPCError({
+                    code: 'INTERNAL_SERVER_ERROR',
+                    message: 'Failed to fetch calendar status',
+                });
+            }
+
+            return {
+                isConnected: !!data,
+                calendarEmail: data?.google_calendar_id || null,
+                syncEnabled: data?.sync_enabled || false,
+                lastSyncedAt: data?.last_synced_at || null,
+            };
+        }),
+
+    /**
+     * Disconnect Google Calendar (Revoke Access)
+     */
+    disconnectCalendar: adminProcedure
+        .input(z.object({ providerId: z.string().uuid() }))
+        .mutation(async ({ ctx, input }) => {
+            // 1. Delete from DB
+            const { error } = await ctx.supabase
+                .from('provider_calendars')
+                .delete()
+                .eq('provider_id', input.providerId);
+
+            if (error) {
+                throw new TRPCError({
+                    code: 'INTERNAL_SERVER_ERROR',
+                    message: 'Failed to disconnect calendar',
+                    cause: error,
+                });
+            }
+
+            // TODO: Ideally we should also revoke the token via Google API here
+            // to be thorough, but deleting it from our DB effectively stops access.
+
+            return { success: true };
+        }),
 });
 
 export type ProviderRouter = typeof providerRouter;

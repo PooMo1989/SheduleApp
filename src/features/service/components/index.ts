@@ -6,6 +6,7 @@
 
 export { ServiceList } from './ServiceList';
 export { ServiceForm } from './ServiceForm';
+export * from './ServiceDetail';
 export { ServicePortal } from './ServicePortal';
 export { ServiceBasicsTab } from './ServiceBasicsTab';
 export { ServiceScheduleTab } from './ServiceScheduleTab';
