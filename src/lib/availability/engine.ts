@@ -177,8 +177,7 @@ export async function checkSlot(
     const slotEnd = new Date(slotStart.getTime() + service.duration_minutes * 60 * 1000);
 
     // Check bookings (L4)
-    // Note: bookings table will exist after migration 027 is applied
-    const { data: conflictingBookings } = await (supabase as any)
+    const { data: conflictingBookings } = await supabase
         .from('bookings')
         .select('id')
         .eq('provider_id', request.providerId)
@@ -251,8 +250,7 @@ export async function getProvidersForSlot(
         if (!provider || !provider.is_active) continue;
 
         // Check for booking conflicts
-        // Note: bookings table will exist after migration 027 is applied
-        const { data: conflicts } = await (supabase as any)
+        const { data: conflicts } = await supabase
             .from('bookings')
             .select('id')
             .eq('provider_id', provider.id)

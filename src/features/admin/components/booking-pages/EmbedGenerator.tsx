@@ -85,7 +85,7 @@ export function EmbedGenerator({ services, providers }: EmbedGeneratorProps) {
 
                     <div className="space-y-2">
                         <Label>Theme</Label>
-                        <Select value={theme} onValueChange={(val: any) => setTheme(val)}>
+                        <Select value={theme} onValueChange={(val: string) => setTheme(val)}>
                             <SelectTrigger>
                                 <SelectValue />
                             </SelectTrigger>
@@ -116,7 +116,7 @@ export function EmbedGenerator({ services, providers }: EmbedGeneratorProps) {
                             </Button>
                         </div>
                         <p className="text-xs text-neutral-500 pt-1">
-                            Paste this code into your website's HTML where you want the booking widget to appear.
+                            Paste this code into your website&apos;s HTML where you want the booking widget to appear.
                         </p>
                     </div>
                 </div>

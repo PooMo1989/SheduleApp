@@ -85,7 +85,7 @@ export const bookingRouter = router({
 
             // 4. Create the booking
             // Note: bookings table will exist after migration 027 is applied
-            const { data: booking, error: bookingError } = await (ctx.supabase as any)
+            const { data: booking, error: bookingError } = await ctx.supabase
                 .from('bookings')
                 .insert({
                     tenant_id: input.tenantId,
@@ -144,7 +144,7 @@ export const bookingRouter = router({
         }).optional())
         .query(async ({ ctx, input }) => {
             // Note: bookings table will exist after migration 027 is applied
-            let query = (ctx.supabase as any)
+            let query = ctx.supabase
                 .from('bookings')
                 .select(`
                     *,
@@ -189,7 +189,7 @@ export const bookingRouter = router({
         }).optional())
         .query(async ({ ctx, input }) => {
             // Note: bookings table will exist after migration 027 is applied
-            let query = (ctx.supabase as any)
+            let query = ctx.supabase
                 .from('bookings')
                 .select(`
                     *,
@@ -258,7 +258,7 @@ export const bookingRouter = router({
             }
 
             // Note: bookings table will exist after migration 027 is applied
-            let query = (ctx.supabase as any)
+            let query = ctx.supabase
                 .from('bookings')
                 .select(`
                     *,
@@ -305,7 +305,7 @@ export const bookingRouter = router({
         .mutation(async ({ ctx, input }) => {
             // Verify user has permission (admin or assigned provider)
             // Note: bookings table will exist after migration 027 is applied
-            const { data: booking, error: fetchError } = await (ctx.supabase as any)
+            const { data: booking, error: fetchError } = await ctx.supabase
                 .from('bookings')
                 .select(`
                     id,
@@ -349,7 +349,7 @@ export const bookingRouter = router({
             }
 
             // Note: bookings table will exist after migration 027 is applied
-            const { data: updated, error: updateError } = await (ctx.supabase as any)
+            const { data: updated, error: updateError } = await ctx.supabase
                 .from('bookings')
                 .update(updateData)
                 .eq('id', input.bookingId)
@@ -380,7 +380,7 @@ export const bookingRouter = router({
         .mutation(async ({ ctx, input }) => {
             // Verify the booking belongs to this user
             // Note: bookings table will exist after migration 027 is applied
-            const { data: booking, error: fetchError } = await (ctx.supabase as any)
+            const { data: booking, error: fetchError } = await ctx.supabase
                 .from('bookings')
                 .select('id, client_user_id, status, start_time')
                 .eq('id', input.bookingId)
@@ -410,7 +410,7 @@ export const bookingRouter = router({
 
             // Cancel the booking
             // Note: bookings table will exist after migration 027 is applied
-            const { data: updated, error: updateError } = await (ctx.supabase as any)
+            const { data: updated, error: updateError } = await ctx.supabase
                 .from('bookings')
                 .update({
                     status: 'cancelled',
@@ -444,7 +444,7 @@ export const bookingRouter = router({
         }))
         .query(async ({ ctx, input }) => {
             // Note: bookings table will exist after migration 027 is applied
-            const { data: booking, error } = await (ctx.supabase as any)
+            const { data: booking, error } = await ctx.supabase
                 .from('bookings')
                 .select(`
                     *,
