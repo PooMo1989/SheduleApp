@@ -22,7 +22,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { trpc } from '@/lib/trpc/client';
-// import { toast } from 'sonner';
+import { toast } from 'sonner';
 
 const inviteSchema = z.object({
     name: z.string().min(2, 'Name is required'),
@@ -51,12 +51,12 @@ export function ProviderInviteForm({ isOpen, onClose, onSuccess }: ProviderInvit
 
     const inviteMutation = trpc.team.invite.useMutation({
         onSuccess: () => {
-            alert('Provider invited successfully');
+            toast.success('Provider invited successfully');
             reset();
             onSuccess();
         },
         onError: (error) => {
-            alert(error.message);
+            toast.error(error.message);
             setIsSubmitting(false);
         },
     });

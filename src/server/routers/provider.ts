@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { router, adminProcedure, protectedProcedure } from '@/lib/trpc/server';
+import { router, adminProcedure, protectedProcedure, providerProcedure } from '@/lib/trpc/server';
 import { TRPCError } from '@trpc/server';
 
 /**
@@ -141,7 +141,6 @@ export const providerRouter = router({
                     .upsert({
                         provider_id: providerId,
                         service_id: serviceId,
-                        tenant_id: ctx.tenantId,
                     }, { onConflict: 'provider_id,service_id' }); // Assuming composite key/unique constraint exists
 
                 // If onConflict fails because constraints aren't set up for unique (provider, service), 
@@ -177,6 +176,8 @@ export const providerRouter = router({
 
     // Legacy method maintained if needed, or removed.
     // keeping getByService for reverse lookup if needed elsewhere.
+    // Legacy method maintained if needed, or removed.
+    // keeping getByService for reverse lookup if needed elsewhere.
     getByService: protectedProcedure
         .input(z.object({ serviceId: z.string().uuid() }))
         .query(async ({ ctx, input }) => {
@@ -197,6 +198,65 @@ export const providerRouter = router({
 
             return data?.map(sp => sp.provider).filter(Boolean) || [];
         }),
+
+    /**
+     * Update current user's provider profile
+     */
+    updateOwn: providerProcedure
+        .input(z.object({
+            name: z.string().min(1).max(100).optional(),
+            bio: z.string().max(1000).optional(),
+            phone: z.string().optional(),
+            photo_url: z.string().url().nullable().optional(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            // Providers can only update the provider record linked to their user_id
+            const { data, error } = await ctx.supabase
+                .from('providers')
+                .update({
+                    ...input,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('user_id', ctx.user.id)
+                .select()
+                .single();
+
+            if (error) {
+                throw new TRPCError({
+                    code: 'INTERNAL_SERVER_ERROR',
+                    message: 'Failed to update profile',
+                    cause: error,
+                });
+            }
+
+            return { success: true, provider: data };
+        }),
+
+    /**
+     * Get current user's provider profile
+     */
+    getMine: providerProcedure.query(async ({ ctx }) => {
+        const { data, error } = await ctx.supabase
+            .from('providers')
+            .select(`
+                *,
+                services:service_providers(
+                    service:services(id, name)
+                )
+            `)
+            .eq('user_id', ctx.user.id)
+            .single();
+
+        if (error || !data) {
+            throw new TRPCError({
+                code: 'NOT_FOUND',
+                message: 'Provider profile not found',
+                cause: error
+            });
+        }
+
+        return data;
+    }),
 });
 
 export type ProviderRouter = typeof providerRouter;

@@ -1,41 +1,75 @@
-/**
- * Provider Schedule Page (Story 6.0 - Placeholder)
- *
- * This page will display the provider's availability schedule editor.
- * Full implementation in Story 6.5 (Tier 8 - Provider Self-Service).
- */
+'use client';
+
+import { trpc } from '@/lib/trpc/client';
+import { Loader2, AlertCircle } from 'lucide-react';
+import { WeeklyScheduleEditor } from '@/components/availability/WeeklyScheduleEditor';
+import { DateOverrideManager } from '@/components/availability/DateOverrideManager';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
 export default function ProviderSchedulePage() {
+    const { data: schedule, isLoading, error, refetch } = trpc.schedule.getMine.useQuery();
+    const { data: provider } = trpc.provider.getMine.useQuery();
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+            </div>
+        );
+    }
+
+    if (error || !schedule) {
+        return (
+            <div className="p-8 text-center text-red-500">
+                Error loading schedule: {error?.message}
+            </div>
+        );
+    }
+
     return (
-        <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold text-neutral-900">Schedule</h1>
-                <p className="text-neutral-600 mt-1">Manage your availability and working hours</p>
+        <div className="max-w-4xl mx-auto py-8 px-4 space-y-8">
+            <div className="flex flex-col gap-2">
+                <h1 className="text-2xl font-bold tracking-tight">My Schedule</h1>
+                <p className="text-neutral-500">Manage your weekly availability and exceptions.</p>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-8 text-center">
-                <div className="max-w-md mx-auto">
-                    <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg
-                            className="w-8 h-8 text-neutral-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                        </svg>
-                    </div>
-                    <h3 className="text-lg font-medium text-neutral-900 mb-2">Set your availability</h3>
-                    <p className="text-neutral-500 mb-4">
-                        Configure your working hours and set date-specific exceptions.
-                    </p>
-                    <p className="text-sm text-neutral-400">
-                        The availability editor will be available in Story 6.5.
-                    </p>
+            {provider?.schedule_autonomy === 'approval_required' && (
+                <Alert className="bg-yellow-50 border-yellow-200">
+                    <AlertCircle className="h-4 w-4 text-yellow-600" />
+                    <AlertTitle className="text-yellow-800">Approval Required</AlertTitle>
+                    <AlertDescription className="text-yellow-700">
+                        Your schedule changes require admin approval before they become public.
+                    </AlertDescription>
+                </Alert>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 space-y-8">
+                    <section className="bg-white p-6 rounded-lg border shadow-sm">
+                        <WeeklyScheduleEditor
+                            baseSchedule={schedule.baseSchedule}
+                            onScheduleChange={refetch}
+                        />
+                    </section>
+                </div>
+
+                <div className="space-y-8">
+                    <section className="bg-white p-6 rounded-lg border shadow-sm">
+                        <DateOverrideManager
+                            overrides={schedule.overrides}
+                            onOverrideChange={refetch}
+                        />
+                    </section>
+
+                    <section className="bg-slate-50 p-6 rounded-lg border">
+                        <h4 className="font-medium mb-2">Calendar Sync</h4>
+                        <p className="text-sm text-neutral-500 mb-4">
+                            Connect Google Calendar to automatically block times when you have other events.
+                        </p>
+                        <button className="text-sm text-blue-600 font-medium hover:underline" disabled>
+                            Connect Google Calendar (Coming Soon)
+                        </button>
+                    </section>
                 </div>
             </div>
         </div>

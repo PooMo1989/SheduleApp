@@ -1,14 +1,33 @@
 'use client';
 
-// import { AvailabilityEditor } from '@/features/availability/components/AvailabilityEditor'; // Assuming established in Story 2.7.1
-// If AvailabilityEditor doesn't exist yet (Tier 8 dependency), we make a placeholder.
-// Checking implementation-order.md: Story 2.7.1 is a prerequisite for 6.5, and should be implemented alongside Tier 7/8.
-// Since Tier 7 is running now, I should verify if AvailabilityEditor exists.
-// If not, I will create a placeholder or a simple schedule viewer.
+import { Suspense } from 'react';
+import { trpc } from '@/lib/trpc/client';
+import { WeeklyScheduleEditor } from '@/components/availability/WeeklyScheduleEditor';
+import { DateOverrideManager } from '@/components/availability/DateOverrideManager';
+import { Loader2 } from 'lucide-react';
 
-export function ProviderScheduleTab({ providerId }: { providerId: string }) {
-    // For Tier 7, we rely on the generic Availability Editor
-    // If it doesn't exist, we stub it.
+interface ProviderScheduleTabProps {
+    providerId: string;
+}
+
+export function ProviderScheduleTab({ providerId }: ProviderScheduleTabProps) {
+    const { data: schedule, isLoading, error, refetch } = trpc.schedule.getSchedule.useQuery({ providerId });
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center p-12">
+                <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+            </div>
+        );
+    }
+
+    if (error || !schedule) {
+        return (
+            <div className="p-12 text-center text-red-500">
+                Error loading schedule: {error?.message || 'Failed to load'}
+            </div>
+        );
+    }
 
     return (
         <div className="h-full flex flex-col">
@@ -16,21 +35,21 @@ export function ProviderScheduleTab({ providerId }: { providerId: string }) {
                 <h3 className="text-lg font-medium text-gray-900">Working Hours</h3>
                 <p className="text-sm text-gray-500">Configure when this provider is available for bookings.</p>
             </div>
-            <div className="flex-1 p-6 bg-gray-50">
-                {/* 
-                  NOTE: AvailabilityEditor implementation is part of Story 2.7.1.
-                  Using a placeholder if not present, otherwise creating it is a scope creep for this exact file.
-                  For now, I'll render a placeholder message guiding to that implementation.
-                */}
-                <div className="bg-white rounded-lg border border-dashed border-gray-300 p-12 text-center">
-                    <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                        <span className="text-blue-600 text-xl font-bold">📅</span>
-                    </div>
-                    <h3 className="text-lg font-medium text-gray-900">Availability Editor</h3>
-                    <p className="text-gray-500 mt-2 max-w-sm mx-auto">
-                        The visual schedule editor (Story 2.7.1) will be integrated here.
-                        It will allow dragging to set weekly hours and adding date overrides.
-                    </p>
+            <div className="flex-1 p-6 bg-gray-50 flex flex-col gap-6 overflow-y-auto">
+                {/* Weekly Schedule */}
+                <WeeklyScheduleEditor
+                    baseSchedule={schedule.baseSchedule}
+                    onScheduleChange={refetch}
+                    providerId={providerId}
+                />
+
+                {/* Date Overrides */}
+                <div className="bg-white rounded-lg border p-4">
+                    <DateOverrideManager
+                        overrides={schedule.overrides}
+                        onOverrideChange={refetch}
+                        providerId={providerId}
+                    />
                 </div>
             </div>
         </div>

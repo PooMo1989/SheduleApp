@@ -1205,7 +1205,7 @@ So that **team members can join easily**.
 
 ---
 
-### Story 2.7.1: Provider Availability Editor UI
+### Story 2.7.1: Provider Availability Editor UI ✅ DONE
 
 As an **admin or provider**,
 I want **a visual weekly schedule builder**,
@@ -2626,7 +2626,7 @@ So that **I can access all management modules logically**.
 
 ---
 
-### Story 2.8.5: Admin Providers Page
+### Story 2.8.5: Admin Providers Page ✅ DONE
 
 As an **owner/admin**,
 I want **a dedicated Providers page in the admin area**,
@@ -2983,7 +2983,7 @@ So that **I can access my appointments, schedule, clients, and profile**.
 
 ---
 
-### Story 6.1.1: Provider Profile Page
+### Story 6.1.1: Provider Profile Page ✅ DONE
 
 As a **provider**,
 I want **to edit my public-facing profile**,
@@ -3013,7 +3013,7 @@ So that **clients see accurate information when booking with me**.
 
 ---
 
-### Story 6.5: Provider Schedule Self-Service
+### Story 6.5: Provider Schedule Self-Service ✅ DONE
 
 As a **provider**,
 I want **to manage my own availability schedule**,

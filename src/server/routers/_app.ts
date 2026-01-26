@@ -5,6 +5,7 @@ import { adminRouter } from './admin';
 import { serviceRouter, categoryRouter } from './service';
 import { teamRouter } from './team';
 import { providerRouter } from './provider';
+import { scheduleRouter } from './schedule';
 
 /**
  * Root tRPC Router for sheduleApp
@@ -32,6 +33,9 @@ export const appRouter = router({
 
     // Provider router for profile editing (Story 2.5)
     provider: providerRouter,
+
+    // Schedule router for availability (Story 2.7.1)
+    schedule: scheduleRouter,
 
     /**
      * Health check endpoint
