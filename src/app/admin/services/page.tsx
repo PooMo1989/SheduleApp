@@ -1,32 +1,16 @@
 'use client';
 
-import { useState } from 'react';
-import { ServiceList, ServiceForm } from '@/features/service/components';
-import type { Service } from '@/types';
+import { ServiceList } from '@/features/service/components';
 
 /**
  * Admin Services Page
- * Story 2.3: Service CRUD Management
+ * Story 2.3.1: Service Setup Tabbed Portal
+ *
+ * Services are now managed via full-page portal at:
+ * - /admin/services/new (create)
+ * - /admin/services/[id]/edit (edit)
  */
 export default function AdminServicesPage() {
-    const [showForm, setShowForm] = useState(false);
-    const [editingService, setEditingService] = useState<Service | null>(null);
-
-    const handleEdit = (service: Service) => {
-        setEditingService(service);
-        setShowForm(true);
-    };
-
-    const handleAddNew = () => {
-        setEditingService(null);
-        setShowForm(true);
-    };
-
-    const handleClose = () => {
-        setShowForm(false);
-        setEditingService(null);
-    };
-
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="max-w-5xl mx-auto py-8 px-4">
@@ -39,16 +23,7 @@ export default function AdminServicesPage() {
                 </div>
 
                 {/* Service List */}
-                <ServiceList onEdit={handleEdit} onAddNew={handleAddNew} />
-
-                {/* Service Form Modal */}
-                {showForm && (
-                    <ServiceForm
-                        service={editingService}
-                        onClose={handleClose}
-                        onSuccess={handleClose}
-                    />
-                )}
+                <ServiceList />
             </div>
         </div>
     );

@@ -2710,7 +2710,7 @@ So that **I can update my details and preferences**.
 
 ## Service & Provider Feature Stories
 
-### Story 2.3.1: Service Setup Tabbed Portal
+### Story 2.3.1: Service Setup Tabbed Portal ✅ DONE
 
 As an **owner/admin**,
 I want **a full-page tabbed service setup experience**,
@@ -3040,7 +3040,7 @@ So that **I can add booking capabilities to external websites or share links wit
 
 ---
 
-### Story 3.4.1: Pay Later Mode Configuration
+### Story 3.4.1: Pay Later Mode Configuration ✅ DONE
 
 As an **owner/admin**,
 I want **Pay Later behavior to be configurable per-service**,
