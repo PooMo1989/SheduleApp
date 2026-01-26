@@ -3284,3 +3284,23 @@ So that **I can share booking URLs via email, social media, or messaging**.
 **When** a new tab opens
 **Then** it shows the booking page with selected configuration
 
+
+### Phase 6: Manual Provider Assignment / Concierge Mode (Deferred)
+**Goal:** Support workflows where an Admin manually assigns providers to bookings, enabling a "Request-based" model instead of pure "Real-time Booking".
+
+**Use Case:** High-end salons or complex service centers where assigning a provider requires human judgment (e.g., matching client personality with provider style) or where providers are not interchangeable.
+
+**Implementation Concept:**
+- **"Unassigned" Bookings:** Allow `provider_id` to be NULL initially.
+- **Admin Queue:** A "Requires Assignment" queue in the Admin Dashboard.
+- **Assignment UI:** Drag-and-drop interface to assign a pending booking to a specific provider's column.
+- **Logic Change:**
+  - If Service Mode = "Manual Assignment":
+    - Availability check uses "Global Business Hours" only (Layer 1).
+    - Booking is created as PENDING_ASSIGNMENT.
+    - No Google Calendar sync until assignment.
+    - Admin manually assigns → Checks availability → Confirms → Syncs.
+
+**Trade-offs:** Removes real-time confirmation for clients; increases admin workload. Suitable for specific business types only.
+
+**Note:** This is a distinct variation from the "Automatic Assignment" (Any Provider) logic used in MVP, where the system auto-assigns a provider to ensure real-time confirmation.

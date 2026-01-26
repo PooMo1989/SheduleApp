@@ -2,40 +2,42 @@
 
 import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
-import { AdminSidebar } from '@/features/admin/components/AdminSidebar';
+import { ProviderSidebar } from './ProviderSidebar';
 import { LogoutButton } from '@/components/common/LogoutButton';
-import { useUserProfile } from '@/features/auth/hooks/useUserProfile';
 
-interface AdminLayoutShellProps {
+interface ProviderLayoutShellProps {
     children: React.ReactNode;
+    companyName?: string;
+    providerName?: string;
 }
 
 /**
- * Admin Layout Shell Component (Story 2.8.4)
+ * Provider Layout Shell Component (Story 6.0)
  *
- * Main layout wrapper for the admin portal with:
- * - Responsive sidebar navigation
- * - Role-aware navigation (passes roles to sidebar for dual-role support)
- * - Mobile hamburger menu
- * - Top header with user actions
+ * Main layout wrapper for the provider portal with responsive sidebar support.
+ * Follows the same design patterns as AdminLayoutShell for consistency.
+ *
+ * Features:
+ * - Desktop: Persistent collapsible sidebar
+ * - Mobile: Hamburger menu with overlay sidebar
+ * - Top header with provider info and logout
  */
-export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
+export function ProviderLayoutShell({
+    children,
+    companyName,
+    providerName
+}: ProviderLayoutShellProps) {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const { profile, isLoading } = useUserProfile();
-
-    // Get roles from profile, default to empty array while loading
-    const roles = profile?.roles || [];
-    const userName = profile?.name || profile?.email || '';
 
     return (
         <div className="min-h-screen bg-neutral-50 flex">
             {/* Desktop Sidebar */}
             <div className="hidden md:flex">
-                <AdminSidebar
+                <ProviderSidebar
                     collapsed={sidebarCollapsed}
                     onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-                    roles={roles}
+                    companyName={companyName}
                 />
             </div>
 
@@ -50,7 +52,7 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
                     />
                     {/* Sidebar */}
                     <div className="fixed inset-y-0 left-0 w-64 z-50">
-                        <AdminSidebar roles={roles} />
+                        <ProviderSidebar companyName={companyName} />
                     </div>
                 </div>
             )}
@@ -75,14 +77,14 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
 
                     {/* Mobile Brand */}
                     <span className="md:hidden text-lg font-bold text-primary-600">
-                        sheduleApp
+                        {companyName || 'sheduleApp'}
                     </span>
 
-                    {/* User info (Desktop) */}
+                    {/* Provider Name (Desktop) */}
                     <div className="hidden md:flex items-center gap-2">
-                        {!isLoading && userName && (
+                        {providerName && (
                             <span className="text-sm text-neutral-600">
-                                Welcome, <span className="font-medium text-neutral-900">{userName}</span>
+                                Welcome, <span className="font-medium text-neutral-900">{providerName}</span>
                             </span>
                         )}
                     </div>
