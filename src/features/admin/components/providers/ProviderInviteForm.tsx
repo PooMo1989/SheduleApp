@@ -97,7 +97,7 @@ export function ProviderInviteForm({ isOpen, onClose, onSuccess }: ProviderInvit
                     <div className="space-y-2">
                         <Label htmlFor="autonomy">Schedule Autonomy</Label>
                         <Select
-                            onValueChange={(val) => setValue('schedule_autonomy', val as any)}
+                            onValueChange={(val) => setValue('schedule_autonomy', val as 'self_managed' | 'approval_required')}
                             defaultValue={watch('schedule_autonomy')}
                         >
                             <SelectTrigger>

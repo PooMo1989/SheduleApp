@@ -58,7 +58,7 @@ export default function BookingPage(props: { searchParams: Promise<{ [key: strin
 }
 
 // Wrapper to unwrap the promise if it is one (Next.js 15), or use directly
-async function AsyncParamsWrapper({ searchParamsPromise }: { searchParamsPromise: Promise<any> }) {
+async function AsyncParamsWrapper({ searchParamsPromise }: { searchParamsPromise: Promise<{ [key: string]: string | string[] | undefined }> }) {
     const params = await searchParamsPromise;
     return <BookingPageContent searchParams={params} />;
 }

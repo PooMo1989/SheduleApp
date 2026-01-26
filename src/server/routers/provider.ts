@@ -119,7 +119,7 @@ export const providerRouter = router({
 
             // Flatten the response to return Service objects
             // Supabase returns { service: { ... } }
-            return data?.map((item: any) => item.service) || [];
+            return data?.map((item) => (item as { service: { id: string; name: string; duration_minutes: number; price: number | null; description: string | null } }).service) || [];
         }),
 
     /**

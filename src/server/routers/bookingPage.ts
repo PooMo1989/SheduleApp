@@ -91,8 +91,7 @@ export const bookingPageRouter = router({
             return serviceProviders
                 .map((sp) => {
                     if (!sp.provider) return null;
-                    // Type assertion since Supabase types might be complex here
-                    const provider = sp.provider as any;
+                    const provider = sp.provider as { id: string; name: string; bio: string | null; photo_url: string | null; title: string | null };
                     return {
                         id: provider.id,
                         name: provider.name,

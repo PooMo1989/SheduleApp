@@ -24,7 +24,7 @@ export default async function BookingPage({ params }: PageProps) {
 
     // Safe logo handling
     // Note: Assuming settings structure matches Story 2.0.3
-    const settings = tenant.settings as any;
+    const settings = tenant.settings as { logo_url?: string; brand_color?: string } | null;
     const brandColor = settings?.brand_color || "#0D9488"; // Default Teal
 
     return (
