@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { trpc } from '@/lib/trpc/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Save, Undo } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -46,11 +45,123 @@ const DEFAULT_TEMPLATES: Record<EventType, { subject: string; body: string }> = 
     },
 };
 
+/**
+ * Sub-component for editing a specific template.
+ * Using this separate component with a `key` prop allows us to reset state
+ * automatically when the event type changes, without using useEffect.
+ */
+function EmailTemplateEditor({
+    eventType,
+    initialSubject,
+    initialBody,
+    onSave
+}: {
+    eventType: EventType;
+    initialSubject: string;
+    initialBody: string;
+    onSave: (subject: string, body: string) => void;
+}) {
+    const [subject, setSubject] = useState(initialSubject);
+    const [body, setBody] = useState(initialBody);
+    const [isDirty, setIsDirty] = useState(false);
+
+    // Mutation is passed down or defined here. Defining here for simplicity.
+    const saveMutation = trpc.admin.email.saveTemplate.useMutation({
+        onSuccess: () => {
+            toast.success('Template saved successfully');
+            setIsDirty(false);
+            onSave(subject, body); // Callback if needed
+        },
+        onError: (err) => {
+            toast.error('Failed to save template: ' + err.message);
+        }
+    });
+
+    const handleSave = () => {
+        saveMutation.mutate({
+            eventType,
+            subject,
+            body,
+        });
+    };
+
+    const handleReset = () => {
+        if (confirm('Reset to default template? This will discard your custom changes.')) {
+            const defaults = DEFAULT_TEMPLATES[eventType];
+            setSubject(defaults.subject);
+            setBody(defaults.body);
+            setIsDirty(true);
+        }
+    };
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Edit Template</CardTitle>
+                <CardDescription>
+                    Customize the subject and body for <strong>{EVENT_TYPES.find(e => e.value === eventType)?.label}</strong>
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="subject">Subject Line</Label>
+                    <Input
+                        id="subject"
+                        value={subject}
+                        onChange={(e) => {
+                            setSubject(e.target.value);
+                            setIsDirty(true);
+                        }}
+                        placeholder="Enter email subject"
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="body">Email Body</Label>
+                    <Textarea
+                        id="body"
+                        value={body}
+                        onChange={(e) => {
+                            setBody(e.target.value);
+                            setIsDirty(true);
+                        }}
+                        placeholder="Enter email content..."
+                        className="min-h-[300px] font-mono text-sm"
+                    />
+                    <p className="text-xs text-gray-500">
+                        Supports plain text. Markdown support coming soon.
+                    </p>
+                </div>
+            </CardContent>
+            <div className="flex justify-between items-center p-6 border-t bg-gray-50 rounded-b-lg">
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleReset}
+                    className="text-gray-500"
+                >
+                    <Undo className="w-4 h-4 mr-2" />
+                    Reset to Default
+                </Button>
+                <Button
+                    onClick={handleSave}
+                    disabled={!isDirty || saveMutation.isPending}
+                    className="bg-teal-600 hover:bg-teal-700"
+                >
+                    {saveMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                        <Save className="w-4 h-4 mr-2" />
+                    )}
+                    Save Changes
+                </Button>
+            </div>
+        </Card>
+    );
+}
+
 export default function EmailSettingsPage() {
     const [selectedEvent, setSelectedEvent] = useState<EventType>('booking_confirmation');
-    const [subject, setSubject] = useState('');
-    const [body, setBody] = useState('');
-    const [isDirty, setIsDirty] = useState(false);
 
     // Fetch existing template
     const { data: template, isLoading, refetch } = trpc.admin.email.getTemplate.useQuery({
@@ -59,50 +170,12 @@ export default function EmailSettingsPage() {
         refetchOnWindowFocus: false,
     });
 
-    // Save mutation
-    const saveMutation = trpc.admin.email.saveTemplate.useMutation({
-        onSuccess: () => {
-            toast.success('Template saved successfully');
-            setIsDirty(false);
-            refetch();
-        },
-        onError: (err) => {
-            toast.error('Failed to save template: ' + err.message);
-        }
-    });
-
-    // Update form when template loads or changes type
-    useEffect(() => {
-        if (!isLoading) {
-            if (template) {
-                setSubject(template.subject_template);
-                setBody(template.body_template);
-            } else {
-                // Load default if no custom template exists
-                setSubject(DEFAULT_TEMPLATES[selectedEvent].subject);
-                setBody(DEFAULT_TEMPLATES[selectedEvent].body);
-            }
-            setIsDirty(false);
-        }
-    }, [template, isLoading, selectedEvent]);
-
-    const handleSave = () => {
-        saveMutation.mutate({
-            eventType: selectedEvent,
-            subject,
-            body,
-        });
-    };
-
-    const handleReset = () => {
-        if (confirm('Reset to default template? This will discard your custom changes.')) {
-            setSubject(DEFAULT_TEMPLATES[selectedEvent].subject);
-            setBody(DEFAULT_TEMPLATES[selectedEvent].body);
-            setIsDirty(true);
-        }
-    };
-
     const currentvariables = EVENT_TYPES.find(e => e.value === selectedEvent)?.variables || [];
+
+    // Determine initial values
+    const defaults = DEFAULT_TEMPLATES[selectedEvent];
+    const initialSubject = template?.subject_template || defaults.subject;
+    const initialBody = template?.body_template || defaults.body;
 
     return (
         <div className="space-y-6 max-w-4xl mx-auto py-6">
@@ -111,7 +184,7 @@ export default function EmailSettingsPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Event Selection Sidebar (or Top on mobile) */}
+                {/* Event Selection Sidebar */}
                 <div className="lg:col-span-1 space-y-4">
                     <Card>
                         <CardHeader>
@@ -152,77 +225,19 @@ export default function EmailSettingsPage() {
 
                 {/* Editor Area */}
                 <div className="lg:col-span-2">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Edit Template</CardTitle>
-                            <CardDescription>
-                                Customize the subject and body for <strong>{EVENT_TYPES.find(e => e.value === selectedEvent)?.label}</strong>
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            {isLoading ? (
-                                <div className="flex justify-center py-12">
-                                    <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="subject">Subject Line</Label>
-                                        <Input
-                                            id="subject"
-                                            value={subject}
-                                            onChange={(e) => {
-                                                setSubject(e.target.value);
-                                                setIsDirty(true);
-                                            }}
-                                            placeholder="Enter email subject"
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="body">Email Body</Label>
-                                        <Textarea
-                                            id="body"
-                                            value={body}
-                                            onChange={(e) => {
-                                                setBody(e.target.value);
-                                                setIsDirty(true);
-                                            }}
-                                            placeholder="Enter email content..."
-                                            className="min-h-[300px] font-mono text-sm"
-                                        />
-                                        <p className="text-xs text-gray-500">
-                                            Supports plain text. Markdown support coming soon.
-                                        </p>
-                                    </div>
-                                </>
-                            )}
-                        </CardContent>
-                        <div className="flex justify-between items-center p-6 border-t bg-gray-50 rounded-b-lg">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={handleReset}
-                                disabled={isLoading}
-                                className="text-gray-500"
-                            >
-                                <Undo className="w-4 h-4 mr-2" />
-                                Reset to Default
-                            </Button>
-                            <Button
-                                onClick={handleSave}
-                                disabled={!isDirty || isLoading || saveMutation.isPending}
-                                className="bg-teal-600 hover:bg-teal-700"
-                            >
-                                {saveMutation.isPending ? (
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                ) : (
-                                    <Save className="w-4 h-4 mr-2" />
-                                )}
-                                Save Changes
-                            </Button>
+                    {isLoading ? (
+                        <div className="flex justify-center py-12 h-full items-center bg-white rounded-lg border">
+                            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
                         </div>
-                    </Card>
+                    ) : (
+                        <EmailTemplateEditor
+                            key={`${selectedEvent}-${template ? 'loaded' : 'default'}`} // Force remount on change
+                            eventType={selectedEvent}
+                            initialSubject={initialSubject}
+                            initialBody={initialBody}
+                            onSave={() => refetch()}
+                        />
+                    )}
                 </div>
             </div>
         </div>
