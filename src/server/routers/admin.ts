@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { router, protectedProcedure, adminProcedure } from '@/lib/trpc/server';
 import { TRPCError } from '@trpc/server';
+import { emailRouter } from './admin.email';
 
 /**
  * Zod schemas for tenant settings validation
@@ -74,6 +75,9 @@ export type Branding = z.infer<typeof brandingSchema>;
  * Handles tenant settings and admin-only operations
  */
 export const adminRouter = router({
+    // Email settings (Story 8.4)
+    email: emailRouter,
+
     /**
      * Get current tenant settings
      * Any authenticated user can view settings (for widget theming)

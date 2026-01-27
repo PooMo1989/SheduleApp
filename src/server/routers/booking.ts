@@ -2,6 +2,10 @@ import { z } from 'zod';
 import { router, publicProcedure, protectedProcedure, adminProcedure, providerProcedure } from '@/lib/trpc/server';
 import { TRPCError } from '@trpc/server';
 import { checkSlot } from '@/lib/availability';
+import { resend } from '@/lib/email';
+import { renderTemplate } from '@/lib/email/renderer';
+import { DEFAULT_EMAIL_TEMPLATES } from '@/lib/email/templates/defaults';
+import { type SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * Booking Status enum matching database
@@ -14,6 +18,21 @@ const BookingStatusEnum = z.enum([
     'completed',
     'no_show',
 ]);
+
+// Helper to get template
+async function getEmailTemplate(supabase: SupabaseClient, tenantId: string, eventType: keyof typeof DEFAULT_EMAIL_TEMPLATES) {
+    const { data } = await supabase
+        .from('email_templates')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .eq('event_type', eventType)
+        .single();
+
+    if (data) {
+        return { subject: data.subject_template, body: data.body_template };
+    }
+    return DEFAULT_EMAIL_TEMPLATES[eventType];
+}
 
 /**
  * Booking Router
@@ -65,17 +84,31 @@ export const bookingRouter = router({
                 });
             }
 
-            // 2. Fetch service details for snapshot
-            const { data: service, error: serviceError } = await ctx.supabase
-                .from('services')
-                .select('duration_minutes, buffer_before_minutes, buffer_after_minutes, price, currency')
-                .eq('id', input.serviceId)
-                .single();
+
+            // 2. Fetch service and provider details
+            const [{ data: service, error: serviceError }, { data: provider, error: providerError }] = await Promise.all([
+                ctx.supabase
+                    .from('services')
+                    .select('name, duration_minutes, buffer_before_minutes, buffer_after_minutes, price, currency')
+                    .eq('id', input.serviceId)
+                    .single(),
+                ctx.supabase
+                    .from('providers')
+                    .select('name, email')
+                    .eq('id', input.providerId)
+                    .single()
+            ]);
 
             if (serviceError || !service) {
                 throw new TRPCError({
                     code: 'NOT_FOUND',
                     message: 'Service not found',
+                });
+            }
+            if (providerError || !provider) {
+                throw new TRPCError({
+                    code: 'NOT_FOUND',
+                    message: 'Provider not found',
                 });
             }
 
@@ -126,6 +159,46 @@ export const bookingRouter = router({
                     message: 'Failed to create booking',
                 });
             }
+
+
+
+            // 5. Send Emails (Async - don't block response if possible)
+            (async () => {
+                try {
+                    // Prepare data
+                    const emailData = {
+                        client_name: input.clientName,
+                        service_name: service.name,
+                        date: startTime.toLocaleDateString(),
+                        time: startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        provider_name: provider.name,
+                        location: 'Business Location', // Placeholder or from tenant settings
+                    };
+
+                    // A. Client Confirmation
+                    const clientTemplate = await getEmailTemplate(ctx.supabase, input.tenantId, 'booking_confirmation');
+                    await resend.emails.send({
+                        from: 'SheduleApp <noreply@resend.dev>', // Use verified domain in prod
+                        to: input.clientEmail,
+                        subject: renderTemplate(clientTemplate.subject, emailData),
+                        text: renderTemplate(clientTemplate.body, emailData),
+                    });
+
+                    // B. Provider Notification
+                    if (provider.email) {
+                        const providerTemplate = await getEmailTemplate(ctx.supabase, input.tenantId, 'provider_notification');
+                        await resend.emails.send({
+                            from: 'SheduleApp <noreply@resend.dev>',
+                            to: provider.email,
+                            subject: renderTemplate(providerTemplate.subject, emailData),
+                            text: renderTemplate(providerTemplate.body, emailData),
+                        });
+                    }
+                } catch (err) {
+                    console.error('Failed to send booking emails:', err);
+                    // Don't fail the request, just log it
+                }
+            })();
 
             return {
                 booking,
@@ -382,7 +455,16 @@ export const bookingRouter = router({
             // Note: bookings table will exist after migration 027 is applied
             const { data: booking, error: fetchError } = await ctx.supabase
                 .from('bookings')
-                .select('id, client_user_id, status, start_time')
+                .select(`
+                                        id, 
+                                        client_user_id, 
+                                        status, 
+                                        start_time,
+                                        client_name,
+                                        client_email,
+                                        services (name),
+                                        providers (name, email)
+                                    `)
                 .eq('id', input.bookingId)
                 .single();
 
@@ -428,6 +510,44 @@ export const bookingRouter = router({
                     message: 'Failed to cancel booking',
                 });
             }
+
+            // Send Cancellation Emails
+            (async () => {
+                try {
+                    const startTime = new Date(booking.start_time);
+                    const emailData = {
+                        client_name: booking.client_name,
+                        service_name: booking.services?.name || 'Service',
+                        date: startTime.toLocaleDateString(),
+                        time: startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        provider_name: booking.providers?.name || 'Provider',
+                    };
+
+                    // Client Cancellation Email
+                    const cancelTemplate = await getEmailTemplate(ctx.supabase, ctx.tenantId, 'booking_cancellation');
+                    if (booking.client_email) {
+                        await resend.emails.send({
+                            from: 'SheduleApp <noreply@resend.dev>',
+                            to: booking.client_email,
+                            subject: renderTemplate(cancelTemplate.subject, emailData),
+                            text: renderTemplate(cancelTemplate.body, emailData),
+                        });
+                    }
+
+                    // Provider Notification (Cancellation)
+                    if (booking.providers?.email) {
+                        await resend.emails.send({
+                            from: 'SheduleApp <noreply@resend.dev>',
+                            to: booking.providers.email,
+                            subject: `Cancelled: ${emailData.service_name}`,
+                            text: `The booking for ${emailData.client_name} on ${emailData.date} at ${emailData.time} has been cancelled by the client.`,
+                        });
+                    }
+
+                } catch (err) {
+                    console.error('Failed to send cancellation emails:', err);
+                }
+            })();
 
             return {
                 booking: updated,
