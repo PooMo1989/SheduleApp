@@ -14,6 +14,7 @@ const publicRoutes = [
     '/auth/callback',
     '/auth/accept-invite',  // Story 2.4.4: Invitation acceptance page
     '/api',  // All API routes - tRPC handles its own auth via protected procedures
+    '/book', // Story 3.3: Public Booking Page
 ];
 
 /**
