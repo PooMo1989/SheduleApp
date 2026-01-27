@@ -1,23 +1,27 @@
-import { Calendar } from 'lucide-react';
+import { BookingList } from '@/features/admin/components';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+    title: 'Bookings | Admin Dashboard',
+    description: 'Manage all company bookings',
+};
 
 export default function AdminBookingsPage() {
     return (
-        <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold text-neutral-900">Bookings</h1>
-                <p className="text-neutral-600 mt-1">
-                    View and manage all bookings across your business.
-                </p>
-            </div>
+        <div className="min-h-screen bg-gray-50">
+            <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+                {/* Header */}
+                <div className="mb-8">
+                    <h1 className="text-2xl font-bold text-gray-900">Bookings</h1>
+                    <p className="mt-1 text-sm text-gray-500">
+                        View and manage all appointments across your business.
+                    </p>
+                </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-12 text-center">
-                <Calendar className="w-12 h-12 text-neutral-300 mx-auto mb-4" />
-                <h2 className="text-lg font-semibold text-neutral-700 mb-2">
-                    Coming Soon
-                </h2>
-                <p className="text-neutral-500 max-w-md mx-auto">
-                    Booking management will be available after the booking flow is implemented (Epic 3 & 4).
-                </p>
+                {/* Main Content */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <BookingList />
+                </div>
             </div>
         </div>
     );

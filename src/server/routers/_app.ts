@@ -9,6 +9,7 @@ import { scheduleRouter } from './schedule';
 import { bookingPageRouter } from './bookingPage';
 import { availabilityRouter } from './availability';
 import { bookingRouter } from './booking';
+import { dashboardRouter } from './dashboard';
 
 /**
  * Root tRPC Router for sheduleApp
@@ -48,6 +49,9 @@ export const appRouter = router({
 
     // Booking router for booking management (Epic 4)
     booking: bookingRouter,
+
+    // Dashboard router for stats (Story 9.1)
+    dashboard: dashboardRouter,
 
     /**
      * Health check endpoint

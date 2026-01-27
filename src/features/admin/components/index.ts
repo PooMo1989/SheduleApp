@@ -12,3 +12,5 @@ export * from './providers/ProviderInviteForm';
 export * from './providers/ProviderDetailsTab';
 export * from './providers/ProviderServicesTab';
 export * from './providers/ProviderScheduleTab';
+export * from './bookings/BookingList';
+export * from './dashboard/DashboardStats';
