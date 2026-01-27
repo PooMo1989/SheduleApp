@@ -72,7 +72,7 @@ export default async function BookingServicePage({ params }: PageProps) {
                                         <span>
                                             {service.pricing_type === 'free'
                                                 ? 'Free'
-                                                : formatPrice(service.price, service.currency)}
+                                                : formatPrice(service.price, service.currency || "USD")}
                                         </span>
                                     </div>
                                 </div>

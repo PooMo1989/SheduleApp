@@ -33,7 +33,6 @@ export function BookingDateSelector({
         {
             serviceId,
             tenantId,
-            createDate: selectedDate ? format(selectedDate, "yyyy-MM-dd") : "",
             startDate: selectedDate ? format(selectedDate, "yyyy-MM-dd") : "",
             endDate: selectedDate ? format(selectedDate, "yyyy-MM-dd") : "", // Single day view for now
             timezone,
