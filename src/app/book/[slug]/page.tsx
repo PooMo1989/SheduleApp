@@ -4,17 +4,17 @@ import Link from "next/link";
 import Image from "next/image";
 
 interface PageProps {
-    params: { slug: string };
+    params: Promise<{ slug: string }>;
     searchParams?: { [key: string]: string | string[] | undefined };
 }
 
 export default async function BookingPage({ params }: PageProps) {
+    const { slug } = await params;
     const trpc = await api();
 
     // 1. Fetch Tenant (Company) Info
-    // 1. Fetch Tenant (Company) Info
     // Removed try/catch to expose real errors (Env/Auth/DB) instead of 404
-    const tenant = await trpc.bookingPage.getTenantBySlug({ slug: params.slug });
+    const tenant = await trpc.bookingPage.getTenantBySlug({ slug });
 
     // 2. Fetch Services
     const services = await trpc.bookingPage.getServices({ tenantId: tenant.id });
@@ -59,7 +59,7 @@ export default async function BookingPage({ params }: PageProps) {
                     services.map((service) => (
                         <Link
                             key={service.id}
-                            href={`/book/${params.slug}/${service.id}`}
+                            href={`/book/${slug}/${service.id}`}
                             className="group border border-slate-200 rounded-lg p-4 hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer flex justify-between items-center block"
                         >
                             <div>
