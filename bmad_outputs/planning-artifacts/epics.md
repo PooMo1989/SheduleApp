@@ -1516,7 +1516,7 @@ So that **I can generate embed codes for external websites**.
 
 ---
 
-### Story 3.3: Mock Test Page
+### Story 3.3: Mock Test Page ✅ DONE
 
 As a **developer/tester**,
 I want **a test page simulating an external website with embedded widget**,
@@ -1539,7 +1539,7 @@ So that **I can verify the embed functionality works correctly**.
 
 ---
 
-### Story 3.4: Booking Creation (Pay Later) (Backend Ready ✅)
+### Story 3.4: Booking Creation (Pay Later) ✅ DONE
 
 As a **client**,
 I want **to book an appointment with "Pay Later" option**,

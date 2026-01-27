@@ -1,5 +1,6 @@
 import { api } from "@/lib/trpc/api";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 
 interface PageProps {
@@ -60,10 +61,10 @@ export default async function BookingPage({ params }: PageProps) {
                     </div>
                 ) : (
                     services.map((service) => (
-                        <div
+                        <Link
                             key={service.id}
-                            className="group border border-slate-200 rounded-lg p-4 hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer flex justify-between items-center"
-                        // In future stories: onClick -> goto service details or calendar
+                            href={`/book/${params.slug}/${service.id}`}
+                            className="group border border-slate-200 rounded-lg p-4 hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer flex justify-between items-center block"
                         >
                             <div>
                                 <h3 className="font-medium text-slate-900 group-hover:text-slate-700">
@@ -82,7 +83,7 @@ export default async function BookingPage({ params }: PageProps) {
                             <div className="text-slate-400 group-hover:text-slate-600">
                                 →
                             </div>
-                        </div>
+                        </Link>
                     ))
                 )}
             </main>
