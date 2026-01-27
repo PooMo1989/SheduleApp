@@ -36,6 +36,7 @@
 - Paid services cannot accept bookings until bank details are provided
 
 **Payment Model:**
+> **Context:** Due to payment gateway limitations in Sri Lanka (lack of Stripe Connect/PayPal), we use a centralized PayHere model where the SAAS owner collects payments and reimburses tenants.
 - The SAAS platform operates a centralized payment gateway (PayHere)
 - All client payments are collected through the platform's gateway
 - Transactions are tracked per-tenant in an internal ledger
@@ -90,6 +91,7 @@ The dashboard is the landing page after sign-in and provides an at-a-glance over
 - Invitation is sent in the background
 - Team member appears in the **Pending** section until accepted
 - System roles (admin permissions) are assigned separately after the member accepts the invitation
+> **UX Decision:** Role selection is intentionally deferred to the post-acceptance phase to keep the invitation form simple and strictly focused on "inviting a person" rather than "configuring a user".
 
 ### 3.3 Team Member List View (Active Members)
 - List displays:

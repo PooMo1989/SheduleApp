@@ -2706,8 +2706,8 @@ So that **I can access all management modules logically**.
 **Given** the old sidebar exists
 **When** this story is implemented
 **Then** "Widget" is renamed to "Booking Pages"
-**And** "Company" standalone page is removed (content moved to Settings > Company Info)
-**And** "Settings" standalone page is replaced with tabbed version (Story 2.8.7)
+**And** "Company" remains a dedicated sidebar item (Story 2.8.9)
+**And** "Settings" focuses strictly on SaaS Account & Permissions (Story 2.8.11)
 **And** "Bookings" is removed (replaced by "Appointments" for providers)
 
 ---
