@@ -12,13 +12,9 @@ export default async function BookingPage({ params }: PageProps) {
     const trpc = await api();
 
     // 1. Fetch Tenant (Company) Info
-    let tenant;
-    try {
-        tenant = await trpc.bookingPage.getTenantBySlug({ slug: params.slug });
-    } catch (error) {
-        console.error("Error fetching tenant:", error);
-        notFound();
-    }
+    // 1. Fetch Tenant (Company) Info
+    // Removed try/catch to expose real errors (Env/Auth/DB) instead of 404
+    const tenant = await trpc.bookingPage.getTenantBySlug({ slug: params.slug });
 
     // 2. Fetch Services
     const services = await trpc.bookingPage.getServices({ tenantId: tenant.id });
