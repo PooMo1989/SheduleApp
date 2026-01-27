@@ -194,7 +194,7 @@ export const bookingRouter = router({
                 .select(`
                     *,
                     services (id, name, duration_minutes, service_type),
-                    providers (id, display_name, user_id)
+                    providers (id, name, user_id)
                 `, { count: 'exact' })
                 .eq('tenant_id', ctx.tenantId)
                 .order('start_time', { ascending: false });

@@ -2101,8 +2101,14 @@ As an **admin**,
 I want **to see all bookings across providers**,
 So that **I have full visibility** (FR51).
 
+### Story 8.1: All Bookings View (Implemented ✅)
+
+As an **admin**,
+I want **to see all bookings across providers**,
+So that **I have full visibility** (FR51).
+
 **Backend Implementation Status:** ✅ Complete
-- `booking.getAll` - Admin view with filters (status, provider, service, date range)
+**Frontend Implementation Status:** ✅ Complete (Tier 2)
 
 **Acceptance Criteria:**
 
@@ -2140,6 +2146,13 @@ I want **to see booking statistics**,
 So that **I can track business performance** (FR53).
 
 **Acceptance Criteria:**
+
+**Given** I access Reports page
+**When** the dashboard loads
+**Then** I see: total bookings (by period), cancellation rate, popular services, popular providers
+**And** I can filter by date range
+
+**Implementation Status:** ✅ Partially Complete (Tier 2 - Basic Stats)
 
 **Given** I access Reports page
 **When** the dashboard loads

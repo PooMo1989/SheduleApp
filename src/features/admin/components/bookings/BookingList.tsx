@@ -120,7 +120,7 @@ export function BookingList() {
                                         <div className="text-xs text-gray-500">{booking.client_email}</div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {booking.providers?.display_name || 'Unassigned'}
+                                        {booking.providers?.name || 'Unassigned'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <Link
