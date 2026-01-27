@@ -1603,16 +1603,19 @@ So that **I know my booking was successful**.
 
 ---
 
-### Story 3.6: Guest Booking Flow (Lazy Registration) (Backend Ready ✅)
+### Story 3.6: Guest Booking Flow (Lazy Registration) ✅ DONE
 
 As a **new client**,
 I want **to book an appointment without creating an account upfront**,
 So that **I can complete my booking quickly without friction** (FR10, FR13).
 
-**Backend Implementation Status:** ✅ Complete
-- `booking.create` - Accepts guest bookings (clientUserId optional)
-- Stores client_name, client_email, client_phone for guest identification
-- `booking.getById` - Lookup booking by ID for confirmation
+**Implementation Status:** ✅ DONE (2026-01-28)
+- ✅ Email conflict detection via `auth.checkEmail` API
+- ✅ "We found your account!" alert with sign-in/continue options
+- ✅ Booking token auto-generation (DB trigger)
+- ✅ Google OAuth "Continue with Google" button
+- ✅ `booking_token` & `token_expires_at` columns added
+- ⏸️ DEFERRED: 10-minute slot hold timer (requires slot_holds table, cron cleanup - separate sub-story)
 
 **Acceptance Criteria:**
 

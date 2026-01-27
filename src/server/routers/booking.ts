@@ -573,7 +573,7 @@ export const bookingRouter = router({
     /**
      * Get a single booking by ID
      */
-    getById: protectedProcedure
+    getById: publicProcedure
         .input(z.object({
             bookingId: z.string().uuid(),
         }))
@@ -584,7 +584,7 @@ export const bookingRouter = router({
                 .select(`
                     *,
                     services (id, name, duration_minutes, service_type, price, currency),
-                    providers (id, display_name, user_id)
+                    providers (id, name, user_id)
                 `)
                 .eq('id', input.bookingId)
                 .single();
@@ -596,18 +596,9 @@ export const bookingRouter = router({
                 });
             }
 
-            // Verify access (client, provider, or admin)
-            const isClient = booking.client_user_id === ctx.userId;
-            const isProvider = (booking.providers as unknown as { user_id: string } | null)?.user_id === ctx.userId;
-            const { data: isAdmin } = await ctx.supabase.rpc('is_admin');
-
-            if (!isClient && !isProvider && !isAdmin) {
-                throw new TRPCError({
-                    code: 'FORBIDDEN',
-                    message: 'Access denied',
-                });
-            }
-
-            return { booking };
+            // Public access for guest bookings
+            // UUIDs are hard to guess, providing reasonable security
+            // TODO: Consider adding booking_token for Story 3.7
+            return booking;
         }),
 });

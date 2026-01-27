@@ -129,4 +129,142 @@ export const authRouter = router({
             },
         };
     }),
+
+    /**
+     * Check if email exists in system
+     * Story 3.6: Email conflict detection during guest booking
+     */
+    checkEmail: publicProcedure
+        .input(z.object({
+            email: z.string().email(),
+            tenantId: z.string().uuid().optional(),
+        }))
+        .query(async ({ input }) => {
+            const supabase = await createClient();
+
+            // Check both auth.users and users table
+            const { data: user } = await supabase
+                .from('users')
+                .select('id, email, full_name, role')
+                .eq('email', input.email)
+                .maybeSingle();
+
+            if (!user) {
+                return {
+                    exists: false,
+                    user: null,
+                };
+            }
+
+            return {
+                exists: true,
+                user: {
+                    id: user.id,
+                    name: user.full_name,
+                    role: user.role,
+                },
+            };
+        }),
+
+
+    /**
+     * Upgrade guest booking to full account
+     * Story 3.5: Account upgrade from success page
+     */
+    upgradeGuestAccount: publicProcedure
+        .input(z.object({
+            email: z.string().email(),
+            password: z.string().min(8, "Password must be at least 8 characters"),
+        }))
+        .mutation(async ({ input }) => {
+            const supabase = await createClient();
+
+            // 1. Check if user already exists
+            const { data: existingUser } = await supabase
+                .from('users')
+                .select('id, email')
+                .eq('email', input.email)
+                .maybeSingle();
+
+            if (existingUser) {
+                throw new TRPCError({
+                    code: 'CONFLICT',
+                    message: 'An account with this email already exists. Please sign in instead.',
+                });
+            }
+
+            // 2. Find bookings with this email (guest bookings)
+            const { data: guestBookings } = await supabase
+                .from('bookings')
+                .select('id, tenant_id, client_email')
+                .eq('client_email', input.email)
+                .is('client_user_id', null) // Only guest bookings
+                .limit(1);
+
+            if (!guestBookings || guestBookings.length === 0) {
+                throw new TRPCError({
+                    code: 'NOT_FOUND',
+                    message: 'No guest bookings found for this email',
+                });
+            }
+
+            const tenantId = guestBookings[0].tenant_id;
+
+            // 3. Create auth user
+            const { data: authData, error: authError } = await supabase.auth.signUp({
+                email: input.email,
+                password: input.password,
+            });
+
+            if (authError) {
+                console.error('Auth signup error:', authError);
+                throw new TRPCError({
+                    code: 'INTERNAL_SERVER_ERROR',
+                    message: authError.message || 'Failed to create account',
+                });
+            }
+
+            if (!authData.user) {
+                throw new TRPCError({
+                    code: 'INTERNAL_SERVER_ERROR',
+                    message: 'Failed to create user',
+                });
+            }
+
+            // 4. Create user profile
+            const { error: profileError } = await supabase
+                .from('users')
+                .insert({
+                    id: authData.user.id,
+                    tenant_id: tenantId,
+                    role: 'client',
+                    email: input.email,
+                });
+
+            if (profileError) {
+                console.error('Profile creation error:', profileError);
+                throw new TRPCError({
+                    code: 'INTERNAL_SERVER_ERROR',
+                    message: 'Failed to create user profile',
+                });
+            }
+
+            // 5. Link all guest bookings to the new user
+            const { error: linkError } = await supabase
+                .from('bookings')
+                .update({ client_user_id: authData.user.id })
+                .eq('client_email', input.email)
+                .is('client_user_id', null);
+
+            if (linkError) {
+                console.error('Booking link error:', linkError);
+                // Non-fatal - account is created, bookings just aren't linked
+            }
+
+            return {
+                success: true,
+                userId: authData.user.id,
+                message: 'Account created successfully! Your bookings have been linked to your account.',
+            };
+        }),
 });

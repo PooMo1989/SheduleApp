@@ -9,6 +9,8 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { GoogleSignInButton } from "@/features/auth/components/GoogleSignInButton";
+
 
 // Zod schema for the form
 const bookingFormSchema = z.object({
@@ -37,13 +39,16 @@ export function BookingForm({
 }: BookingFormProps) {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [emailExists, setEmailExists] = useState<{ exists: boolean; name?: string } | null>(null);
+    const [checkingEmail, setCheckingEmail] = useState(false);
+
 
     // Mutation
     const createBooking = trpc.booking.create.useMutation({
         onSuccess: (data) => {
             toast.success("Booking confirmed!");
             // Redirect to success page (we can pass the booking ID if needed)
-            router.push(`/book/${slug}/success?bookingId=${data.booking.id}`);
+            router.push(`/book/${slug}/success?bookingId=${data.booking.id}&slug=${slug}`);
         },
         onError: (error) => {
             console.error("Booking failed:", error);
@@ -101,6 +106,37 @@ export function BookingForm({
         });
     };
 
+    // tRPC utils for client-side queries
+    const trpcUtils = trpc.useUtils();
+
+    // Check if email exists (Story 3.6)
+    const handleEmailCheck = async (email: string) => {
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            setEmailExists(null);
+            return;
+        }
+
+        setCheckingEmail(true);
+        try {
+            const result = await trpcUtils.client.auth.checkEmail.query({ email, tenantId });
+
+            if (result.exists) {
+                setEmailExists({
+                    exists: true,
+                    name: result.user?.name || undefined,
+                });
+            } else {
+                setEmailExists({ exists: false });
+            }
+        } catch (error) {
+            console.error('Email check failed:', error);
+            setEmailExists(null);
+        } finally {
+            setCheckingEmail(false);
+        }
+    };
+
+
     return (
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {/* Name */}
@@ -131,11 +167,55 @@ export function BookingForm({
                     id="email"
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
                     placeholder="jane@example.com"
+                    onBlur={(e) => handleEmailCheck(e.target.value)}
                 />
                 {form.formState.errors.email && (
                     <p className="mt-1 text-xs text-red-500">{form.formState.errors.email.message}</p>
                 )}
+
+                {/* Email Conflict Alert (Story 3.6) */}
+                {emailExists?.exists && (
+                    <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="flex items-start">
+                            <div className="flex-shrink-0">
+                                <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                </svg>
+                            </div>
+                            <div className="ml-3 flex-1">
+                                <h3 className="text-sm font-medium text-blue-800">
+                                    We found your account!
+                                    {emailExists.name && ` (${emailExists.name})`}
+                                </h3>
+                                <div className="mt-2 text-sm text-blue-700">
+                                    <p>You can:</p>
+                                </div>
+                                <div className="mt-2 flex gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => router.push(`/auth/signin?email=${form.getValues('email')}&redirect=/book/${slug}/${serviceId}/confirm?time=${startTime}&providerId=${providerId}`)}
+                                        className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
+                                    >
+                                        Sign in to book
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setEmailExists(null)}
+                                        className="text-xs px-3 py-1.5 bg-white text-blue-700 border border-blue-300 rounded hover:bg-blue-50 font-medium"
+                                    >
+                                        Continue as guest
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {checkingEmail && (
+                    <p className="mt-1 text-xs text-slate-500">Checking email...</p>
+                )}
             </div>
+
 
             {/* Phone */}
             <div>
@@ -166,6 +246,25 @@ export function BookingForm({
                 {form.formState.errors.notes && (
                     <p className="mt-1 text-xs text-red-500">{form.formState.errors.notes.message}</p>
                 )}
+            </div>
+
+            {/* OAuth Alternative (Story 3.6) */}
+            <div className="py-4">
+                <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-slate-200"></div>
+                    </div>
+                    <div className="relative flex justify-center text-xs">
+                        <span className="px-2 bg-white text-slate-500">Or create an account while booking</span>
+                    </div>
+                </div>
+
+                <div className="mt-4">
+                    <GoogleSignInButton
+                        redirectTo={`/book/${slug}/${serviceId}/confirm?time=${startTime}&providerId=${providerId}`}
+                        text="Continue with Google"
+                    />
+                </div>
             </div>
 
             {/* Submit Button */}
