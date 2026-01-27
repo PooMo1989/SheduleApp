@@ -85,8 +85,8 @@ export const bookingRouter = router({
             }
 
 
-            // 2. Fetch service and provider details
-            const [{ data: service, error: serviceError }, { data: provider, error: providerError }] = await Promise.all([
+            // 2. Fetch service, provider, and tenant settings
+            const [{ data: service, error: serviceError }, { data: provider, error: providerError }, { data: tenant, error: tenantError }] = await Promise.all([
                 ctx.supabase
                     .from('services')
                     .select('name, duration_minutes, buffer_before_minutes, buffer_after_minutes, price, currency')
@@ -96,6 +96,11 @@ export const bookingRouter = router({
                     .from('providers')
                     .select('name, email')
                     .eq('id', input.providerId)
+                    .single(),
+                ctx.supabase
+                    .from('tenants')
+                    .select('pay_later_mode')
+                    .eq('id', input.tenantId)
                     .single()
             ]);
 
@@ -111,6 +116,16 @@ export const bookingRouter = router({
                     message: 'Provider not found',
                 });
             }
+            if (tenantError || !tenant) {
+                throw new TRPCError({
+                    code: 'NOT_FOUND',
+                    message: 'Tenant configuration not found',
+                });
+            }
+
+            // Determine initial status based on settings
+            // Default to 'pending' if mode is 'pending_approval' or null
+            const initialStatus = tenant.pay_later_mode === 'auto_confirm' ? 'confirmed' : 'pending';
 
             // 3. Calculate end time
             const startTime = new Date(input.startTime);
@@ -139,7 +154,7 @@ export const bookingRouter = router({
                     client_phone: input.clientPhone,
                     client_notes: input.clientNotes,
                     // Status
-                    status: 'pending',
+                    status: initialStatus,
                 })
                 .select()
                 .single();
