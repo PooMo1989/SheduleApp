@@ -76,7 +76,7 @@ export default function BookingSuccessPage() {
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12 max-w-md w-full text-center">
                     <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
                     <h1 className="text-xl font-bold text-slate-900 mb-2">Booking Not Found</h1>
-                    <p className="text-slate-600 mb-6">We couldn't find your booking details.</p>
+                    <p className="text-slate-600 mb-6">We couldn&apos;t find your booking details.</p>
                     {slug && (
                         <Link
                             href={`/book/${slug}`}

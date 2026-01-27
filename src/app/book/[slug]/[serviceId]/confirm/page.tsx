@@ -1,7 +1,7 @@
 import { api } from "@/lib/trpc/api";
 import { notFound, redirect } from "next/navigation";
 import { BookingForm } from "@/components/booking/BookingForm";
-import { ChevronLeft, Calendar as CalendarIcon, Clock, User } from "lucide-react";
+import { ChevronLeft, Calendar as CalendarIcon, Clock } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 
@@ -23,7 +23,7 @@ export default async function BookingConfirmPage({ params, searchParams }: PageP
 
     // Validate parameters
     if (!time) {
-        redirect(`/book/${slug}/${serviceId}`);
+        redirect(`/ book / ${slug}/${serviceId}`);
     }
 
     // 1. Fetch Service
