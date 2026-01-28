@@ -95,12 +95,13 @@ email_verified: true, // Auto-verified for invited users
 
 ### ✅ AC3: Guest Exemption
 
-**Note:** Guest clients bypass email verification - security via magic link tokens.
+**Note:** Guest clients bypass email verification - security via magic link tokens. Guest account upgrades are auto-verified.
 
 **Status:** ✅ PASS
 - Guest bookings: No auth.users account created
 - Security: 32-byte random tokens, 30-day expiry
-- Optional upgrade: Password validation only when upgrading
+- Optional upgrade: Password validation + auto-verified (email proved via magic link)
+- Safe to enable "Confirm email" in Supabase
 
 ---
 
@@ -180,9 +181,13 @@ Expected output: All tests pass ✅
 3. Set "Confirmation expiry" to 24 hours (default)
 
 **Impact:**
-- Admin signups must verify email before login
-- Team invitations bypass this (auto-verified in code)
-- Google OAuth bypasses this (trusted provider)
+- Admin signups must verify email before login ✅ (Security)
+- Team invitations bypass this (auto-verified in code) ✅ (Frictionless)
+- Google OAuth bypasses this (trusted provider) ✅ (Frictionless)
+- Guest upgrades bypass this (auto-verified in code) ✅ (Frictionless)
+- Initial guest bookings unaffected (no auth account) ✅ (Frictionless)
+
+**Safe to enable:** Guest bookings remain completely frictionless!
 
 ### Development/Testing Setup
 

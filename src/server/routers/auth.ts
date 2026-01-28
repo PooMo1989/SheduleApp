@@ -248,6 +248,8 @@ export const authRouter = router({
             }
 
             // 4. Create user profile
+            // Story 3.8: Auto-verify email for guest upgrades
+            // Rationale: Guest already verified email via magic link
             const { error: profileError } = await supabase
                 .from('users')
                 .insert({
@@ -255,6 +257,7 @@ export const authRouter = router({
                     tenant_id: tenantId,
                     role: 'client',
                     email: input.email,
+                    email_verified: true, // Auto-verify (guest proved email via magic link)
                 });
 
             if (profileError) {

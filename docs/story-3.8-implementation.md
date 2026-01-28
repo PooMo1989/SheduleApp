@@ -46,7 +46,8 @@ Added helpful password requirement hints to all password input fields:
 **Current Implementation:**
 - Team invitation acceptance: Sets `email_verified: true` automatically (line 837 in `team.ts`)
 - Google OAuth: Auto-verified by Supabase (trusted provider)
-- Guest clients: Bypass email verification (use magic link tokens)
+- Guest account upgrade: Sets `email_verified: true` automatically (guest already verified via magic link)
+- Guest clients (initial booking): Bypass email verification (use magic link tokens)
 
 **Supabase Configuration (Required):**
 Email confirmation is managed in Supabase Dashboard. The following settings are needed:
@@ -128,17 +129,21 @@ Guest → Books appointment with email only
       → Receives magic link in email
       → Can manage bookings via magic link
       → Optional: Upgrade to full account later
+      → If upgrading: Auto-verified (already proved email via magic link)
 ```
 
 **Security Enforcement:**
 - ✅ Magic link token (32-byte secure random)
 - ✅ Token expiration (30 days)
-- ✅ No email verification required (frictionless)
+- ✅ No email verification required for initial booking (frictionless)
 - ✅ Password complexity only if upgrading to full account
+- ✅ Auto-verified on upgrade (email already verified via magic link)
 
 **Code Reference:** `src/server/routers/auth.ts:upgradeGuestAccount`
-- Guest accounts bypass email verification
-- Password complexity applied only when upgrading
+- Initial guest bookings: No auth account, use magic links
+- Guest account upgrade: Auto-verified (sets `email_verified: true`)
+- Password complexity applied when upgrading
+- Safe to enable "Confirm email" in Supabase
 
 ## Testing Checklist
 
@@ -197,12 +202,19 @@ Guest → Books appointment with email only
 #### 1. Email Confirmation (Production)
 **Path:** Authentication → Email → Confirm email
 
-**Recommended Setting:** ✅ Enabled
+**Recommended Setting:** ✅ **ENABLED** (Safe with guest upgrade fix)
 
 **Impact:**
-- New signups must verify email before login
-- Team invitations bypass this (auto-verified in code)
-- Google OAuth bypasses this (trusted provider)
+- Admin signups must verify email before login ✅ (Security)
+- Team invitations bypass this (auto-verified in code) ✅ (Frictionless)
+- Google OAuth bypasses this (trusted provider) ✅ (Frictionless)
+- Guest upgrades bypass this (auto-verified in code) ✅ (Frictionless)
+- Initial guest bookings unaffected (no auth account) ✅ (Frictionless)
+
+**Why it's safe to enable:**
+- Guest bookings don't create auth accounts (magic link tokens)
+- Guest upgrades auto-verify (email already proved via magic link)
+- Best security + best UX balance
 
 #### 2. Email Templates (Customization)
 **Path:** Authentication → Email Templates
