@@ -1648,7 +1648,7 @@ So that **I can complete my booking quickly without friction** (FR10, FR13).
     
 ---
 
-### Story 3.7: Guest Magic Link & Account Claim
+### Story 3.7: Guest Magic Link & Account Claim ✅ DONE
 
 As a **guest client**,
 I want **to access and manage my bookings via a secure link**,
