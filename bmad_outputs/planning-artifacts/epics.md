@@ -1683,7 +1683,7 @@ So that **I can reschedule or cancel without needing an account** (FR13).
 
 ---
 
-### Story 3.8: Admin/Provider Strict Authentication
+### Story 3.8: Admin/Provider Strict Authentication ✅ DONE
 
 As a **system admin**,
 I want **admins and providers to have strict account verification**,
