@@ -172,6 +172,9 @@ export function RegisterForm() {
                     className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-neutral-900"
                     placeholder="••••••••"
                 />
+                <p className="mt-1 text-xs text-neutral-500">
+                    Must be 8+ characters with uppercase and lowercase letters
+                </p>
                 {errors.password && (
                     <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
                 )}

@@ -8,9 +8,19 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { trpc } from '@/lib/trpc/client';
 import { createClient } from '@/lib/supabase/client';
 
+/**
+ * Password validation with security requirements
+ * Story 3.8: Admin/Provider Strict Authentication
+ */
+const passwordSchema = z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter');
+
 const acceptInviteSchema = z.object({
     fullName: z.string().min(1, 'Name is required'),
-    password: z.string().min(8, 'Password must be at least 8 characters'),
+    password: passwordSchema,
     confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
@@ -256,6 +266,9 @@ function AcceptInviteContent() {
                                 placeholder="Create a password"
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                             />
+                            <p className="mt-1 text-xs text-gray-500">
+                                Must be 8+ characters with uppercase and lowercase letters
+                            </p>
                             {errors.password && (
                                 <p className="mt-1 text-sm text-red-500">{errors.password.message}</p>
                             )}

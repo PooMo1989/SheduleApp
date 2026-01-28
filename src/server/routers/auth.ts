@@ -8,6 +8,21 @@ import { registerSchema } from '@/features/auth/schemas/register';
 const DEFAULT_TENANT_ID = 'a0000000-0000-0000-0000-000000000001';
 
 /**
+ * Password validation with security requirements
+ * Story 3.8: Admin/Provider Strict Authentication
+ *
+ * Requirements:
+ * - Minimum 8 characters
+ * - At least one uppercase letter (A-Z)
+ * - At least one lowercase letter (a-z)
+ */
+const passwordSchema = z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter');
+
+/**
  * Auth Router
  * Handles user registration, login, and authentication-related procedures
  */
@@ -170,11 +185,12 @@ export const authRouter = router({
     /**
      * Upgrade guest booking to full account
      * Story 3.5: Account upgrade from success page
+     * Story 3.8: Apply password requirements for consistency
      */
     upgradeGuestAccount: publicProcedure
         .input(z.object({
             email: z.string().email(),
-            password: z.string().min(8, "Password must be at least 8 characters"),
+            password: passwordSchema,
         }))
         .mutation(async ({ input }) => {
             const supabase = await createClient();

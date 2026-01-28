@@ -15,6 +15,21 @@ function generateToken(): string {
 }
 
 /**
+ * Password validation with security requirements
+ * Story 3.8: Admin/Provider Strict Authentication
+ *
+ * Requirements:
+ * - Minimum 8 characters
+ * - At least one uppercase letter (A-Z)
+ * - At least one lowercase letter (a-z)
+ */
+const passwordSchema = z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter');
+
+/**
  * Valid roles for team members
  */
 const validRoles = ['admin', 'provider', 'client'] as const;
@@ -777,11 +792,12 @@ export const teamRouter = router({
     /**
      * Accept an invitation and create account (PUBLIC)
      * Story 2.4.4: Invitation Acceptance Flow
+     * Story 3.8: Admin/Provider Strict Authentication
      */
     acceptInvite: publicProcedure
         .input(z.object({
             token: z.string().min(1),
-            password: z.string().min(8, 'Password must be at least 8 characters'),
+            password: passwordSchema,
             fullName: z.string().min(1, 'Name is required'),
         }))
         .mutation(async ({ ctx, input }) => {

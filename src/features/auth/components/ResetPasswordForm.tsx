@@ -8,8 +8,18 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+/**
+ * Password validation with security requirements
+ * Story 3.8: Admin/Provider Strict Authentication
+ */
+const passwordSchema = z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter');
+
 const resetPasswordSchema = z.object({
-    password: z.string().min(8, 'Password must be at least 8 characters'),
+    password: passwordSchema,
     confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
@@ -140,6 +150,9 @@ export function ResetPasswordForm() {
                     autoComplete="new-password"
                     placeholder="••••••••"
                 />
+                <p className="mt-1 text-xs text-neutral-500">
+                    Must be 8+ characters with uppercase and lowercase letters
+                </p>
                 {errors.password && (
                     <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
                 )}
