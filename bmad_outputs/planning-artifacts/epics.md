@@ -1567,7 +1567,7 @@ So that **I can reserve a slot without immediate payment** (FR23-FR24).
 
 ---
 
-### Story 3.5: Booking Confirmation UI
+### Story 3.5: Booking Confirmation UI ✅ DONE
 
 As a **client**,
 I want **to see a confirmation after booking**,
