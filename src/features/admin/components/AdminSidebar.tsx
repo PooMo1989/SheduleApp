@@ -15,8 +15,10 @@ import {
     ChevronLeft,
     ChevronRight,
     Building2,
+    ClipboardList,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
+import { trpc } from '@/lib/trpc/client';
 
 /**
  * Navigation item definition
@@ -29,6 +31,8 @@ interface NavItem {
     visibleToRoles?: UserRole[];
     /** Whether this item requires the user to also have provider role */
     requiresProviderRole?: boolean;
+    /** Optional badge count to display */
+    badge?: number;
 }
 
 /**
@@ -41,16 +45,18 @@ interface NavItem {
  * - Team: All admin/owner
  * - Providers: All admin/owner (separate from Team)
  * - Clients: All admin/owner
+ * - Bookings: All admin/owner (Epic 4, Story 4.2)
  * - Booking Pages: All admin/owner (renamed from Widget)
  * - Settings: All admin/owner
  */
-const mainNavItems: NavItem[] = [
+const getMainNavItems = (pendingCount?: number): NavItem[] => [
     { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/appointments', label: 'Appointments', icon: Calendar, requiresProviderRole: true },
     { href: '/admin/services', label: 'Services', icon: Briefcase },
     { href: '/admin/team', label: 'Team', icon: Users },
     { href: '/admin/providers', label: 'Providers', icon: UserCog },
     { href: '/admin/clients', label: 'Clients', icon: UsersRound },
+    { href: '/admin/bookings', label: 'Bookings', icon: ClipboardList, badge: pendingCount },
     { href: '/admin/booking-pages', label: 'Booking Pages', icon: Link2 },
     { href: '/admin/company', label: 'Company', icon: Building2 }, // Story 2.8.9: Separate Company sidebar item
     { href: '/admin/settings', label: 'Settings', icon: Settings },
@@ -89,6 +95,10 @@ export function AdminSidebar({
 }: AdminSidebarProps) {
     const pathname = usePathname();
 
+    // Fetch pending bookings count (Epic 4, Story 4.2)
+    const { data: stats } = trpc.dashboard.getStats.useQuery();
+    const pendingCount = stats?.pendingApprovals || 0;
+
     // Check if user has dual-role (admin/owner + provider)
     const isAdminOrOwner = roles.includes('admin') || roles.includes('owner');
     const isAlsoProvider = roles.includes('provider');
@@ -113,6 +123,7 @@ export function AdminSidebar({
         });
     };
 
+    const mainNavItems = getMainNavItems(pendingCount);
     const visibleMainNav = filterNavItems(mainNavItems);
     const visibleBottomNav = filterNavItems(bottomNavItems);
 
@@ -135,7 +146,16 @@ export function AdminSidebar({
                     aria-current={isActive ? 'page' : undefined}
                 >
                     <Icon className="w-5 h-5 flex-shrink-0" />
-                    {!collapsed && <span>{item.label}</span>}
+                    {!collapsed && (
+                        <>
+                            <span className="flex-1">{item.label}</span>
+                            {item.badge !== undefined && item.badge > 0 && (
+                                <span className="bg-amber-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                    {item.badge}
+                                </span>
+                            )}
+                        </>
+                    )}
                 </Link>
             </li>
         );

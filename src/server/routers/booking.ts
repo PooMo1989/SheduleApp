@@ -223,6 +223,59 @@ export const bookingRouter = router({
                 }
             })();
 
+            // Send admin notification for pending bookings (Epic 4, Story 4.5)
+            if (initialStatus === 'pending') {
+                (async () => {
+                    try {
+                        // Fetch tenant contact email
+                        const { data: tenantData } = await ctx.supabase
+                            .from('tenants')
+                            .select('contact_email, name')
+                            .eq('id', input.tenantId)
+                            .single();
+
+                        if (!tenantData?.contact_email) {
+                            console.log('No admin contact email configured for tenant');
+                            return;
+                        }
+
+                        // Fetch admin notification template
+                        const { data: adminTemplate } = await ctx.supabase
+                            .from('email_templates')
+                            .select('*')
+                            .eq('tenant_id', input.tenantId)
+                            .eq('event_type', 'admin_notification')
+                            .single();
+
+                        if (!adminTemplate) {
+                            console.log('No admin notification template found');
+                            return;
+                        }
+
+                        const adminEmailData = {
+                            client_name: input.clientName,
+                            client_email: input.clientEmail,
+                            service_name: service.name,
+                            provider_name: provider.name,
+                            date: startTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+                            time: startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                            admin_link: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/admin/bookings`,
+                        };
+
+                        await resend.emails.send({
+                            from: 'SheduleApp <noreply@resend.dev>',
+                            to: tenantData.contact_email,
+                            subject: renderTemplate(adminTemplate.subject_template, adminEmailData),
+                            text: renderTemplate(adminTemplate.body_template, adminEmailData),
+                        });
+
+                        console.log('Admin notification sent for pending booking');
+                    } catch (error) {
+                        console.error('Failed to send admin notification:', error);
+                    }
+                })();
+            }
+
             return {
                 booking,
                 message: 'Booking created successfully',
@@ -462,6 +515,201 @@ export const bookingRouter = router({
             return {
                 booking: updated,
                 message: `Booking status updated to ${input.status}`,
+            };
+        }),
+
+    /**
+     * Approve a pending booking
+     * Epic 4, Story 4.3: Admin Approve Booking
+     */
+    approveBooking: adminProcedure
+        .input(z.object({
+            bookingId: z.string().uuid(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            const supabase = ctx.supabase;
+
+            // 1. Fetch booking to verify it exists and is pending
+            const { data: booking, error: fetchError } = await supabase
+                .from('bookings')
+                .select(`
+                    *,
+                    services (id, name, duration_minutes),
+                    providers (id, name, email, user_id)
+                `)
+                .eq('id', input.bookingId)
+                .eq('tenant_id', ctx.tenantId)
+                .single();
+
+            if (fetchError || !booking) {
+                throw new TRPCError({
+                    code: 'NOT_FOUND',
+                    message: 'Booking not found',
+                });
+            }
+
+            if (booking.status !== 'pending') {
+                throw new TRPCError({
+                    code: 'BAD_REQUEST',
+                    message: `Cannot approve booking with status: ${booking.status}`,
+                });
+            }
+
+            // 2. Update booking to confirmed with approval metadata
+            const { error: updateError } = await supabase
+                .from('bookings')
+                .update({
+                    status: 'confirmed',
+                    approved_at: new Date().toISOString(),
+                    approved_by: ctx.userId,
+                })
+                .eq('id', input.bookingId);
+
+            if (updateError) {
+                throw new TRPCError({
+                    code: 'INTERNAL_SERVER_ERROR',
+                    message: 'Failed to approve booking',
+                });
+            }
+
+            // 3. Send approval emails (async, non-blocking)
+            (async () => {
+                try {
+                    const startTime = new Date(booking.start_time);
+
+                    // Fetch email templates
+                    const { data: templates } = await supabase
+                        .from('email_templates')
+                        .select('*')
+                        .eq('tenant_id', ctx.tenantId)
+                        .in('event_type', ['booking_confirmation', 'provider_notification']);
+
+                    const confirmationTemplate = templates?.find(t => t.event_type === 'booking_confirmation');
+                    const providerTemplate = templates?.find(t => t.event_type === 'provider_notification');
+
+                    // Data for email templates
+                    const emailData = {
+                        client_name: booking.client_name,
+                        service_name: booking.services?.name || 'Service',
+                        date: startTime.toLocaleDateString(),
+                        time: startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        provider_name: booking.providers?.name || 'Provider',
+                        location: 'Business Location',
+                    };
+
+                    // Send client confirmation
+                    if (confirmationTemplate) {
+                        await resend.emails.send({
+                            from: 'SheduleApp <noreply@resend.dev>',
+                            to: booking.client_email,
+                            subject: renderTemplate(confirmationTemplate.subject_template, emailData),
+                            text: renderTemplate(confirmationTemplate.body_template, emailData),
+                        });
+                    }
+
+                    // Send provider notification
+                    if (providerTemplate && booking.providers?.email) {
+                        await resend.emails.send({
+                            from: 'SheduleApp <noreply@resend.dev>',
+                            to: booking.providers.email,
+                            subject: renderTemplate(providerTemplate.subject_template, emailData),
+                            text: renderTemplate(providerTemplate.body_template, emailData),
+                        });
+                    }
+                } catch (emailError) {
+                    console.error('Failed to send approval emails:', emailError);
+                }
+            })();
+
+            return {
+                success: true,
+                message: 'Booking approved',
+            };
+        }),
+
+    /**
+     * Reject a pending booking with reason
+     * Epic 4, Story 4.4: Admin Reject Booking
+     */
+    rejectBooking: adminProcedure
+        .input(z.object({
+            bookingId: z.string().uuid(),
+            reason: z.string().min(1, 'Rejection reason is required').max(1000),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            const supabase = ctx.supabase;
+
+            // 1. Fetch booking
+            const { data: booking, error: fetchError } = await supabase
+                .from('bookings')
+                .select(`
+                    *,
+                    services (id, name),
+                    providers (id, name)
+                `)
+                .eq('id', input.bookingId)
+                .eq('tenant_id', ctx.tenantId)
+                .single();
+
+            if (fetchError || !booking) {
+                throw new TRPCError({
+                    code: 'NOT_FOUND',
+                    message: 'Booking not found',
+                });
+            }
+
+            if (booking.status !== 'pending') {
+                throw new TRPCError({
+                    code: 'BAD_REQUEST',
+                    message: `Cannot reject booking with status: ${booking.status}`,
+                });
+            }
+
+            // 2. Update booking to rejected with reason
+            const { error: updateError } = await supabase
+                .from('bookings')
+                .update({
+                    status: 'rejected',
+                    rejection_reason: input.reason,
+                })
+                .eq('id', input.bookingId);
+
+            if (updateError) {
+                throw new TRPCError({
+                    code: 'INTERNAL_SERVER_ERROR',
+                    message: 'Failed to reject booking',
+                });
+            }
+
+            // 3. Send rejection email to client (async, non-blocking)
+            (async () => {
+                try {
+                    const startTime = new Date(booking.start_time);
+
+                    // Create rejection email
+                    const emailHtml = `
+                        <h2>Booking Request Update</h2>
+                        <p>Hi ${booking.client_name},</p>
+                        <p>Unfortunately, we're unable to confirm your booking request for <strong>${booking.services?.name}</strong> on <strong>${startTime.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</strong>.</p>
+                        <p><strong>Reason:</strong> ${input.reason}</p>
+                        <p>If you have questions or would like to book a different time, please contact us.</p>
+                        <p>Thank you for your understanding.</p>
+                    `;
+
+                    await resend.emails.send({
+                        from: 'SheduleApp <noreply@resend.dev>',
+                        to: booking.client_email,
+                        subject: 'Booking Request Update',
+                        text: emailHtml,
+                    });
+                } catch (emailError) {
+                    console.error('Failed to send rejection email:', emailError);
+                }
+            })();
+
+            return {
+                success: true,
+                message: 'Booking rejected',
             };
         }),
 

@@ -7,7 +7,7 @@ describe('registerSchema', () => {
             const result = registerSchema.safeParse({
                 email: 'user@example.com',
                 phone: '1234567890',
-                password: 'password123',
+                password: 'Password123',
             });
             expect(result.success).toBe(true);
         });
@@ -16,7 +16,7 @@ describe('registerSchema', () => {
             const result = registerSchema.safeParse({
                 email: 'not-an-email',
                 phone: '1234567890',
-                password: 'password123',
+                password: 'Password123',
             });
             expect(result.success).toBe(false);
             if (!result.success) {
@@ -28,7 +28,7 @@ describe('registerSchema', () => {
             const result = registerSchema.safeParse({
                 email: '',
                 phone: '1234567890',
-                password: 'password123',
+                password: 'Password123',
             });
             expect(result.success).toBe(false);
         });
@@ -39,7 +39,7 @@ describe('registerSchema', () => {
             const result = registerSchema.safeParse({
                 email: 'user@example.com',
                 phone: '1234567890',
-                password: 'password123',
+                password: 'Password123',
             });
             expect(result.success).toBe(true);
         });
@@ -48,7 +48,7 @@ describe('registerSchema', () => {
             const result = registerSchema.safeParse({
                 email: 'user@example.com',
                 phone: '123456789',
-                password: 'password123',
+                password: 'Password123',
             });
             expect(result.success).toBe(false);
             if (!result.success) {
@@ -62,7 +62,7 @@ describe('registerSchema', () => {
             const result = registerSchema.safeParse({
                 email: 'user@example.com',
                 phone: '1234567890',
-                password: 'password',
+                password: 'Password1',
             });
             expect(result.success).toBe(true);
         });
@@ -71,7 +71,7 @@ describe('registerSchema', () => {
             const result = registerSchema.safeParse({
                 email: 'user@example.com',
                 phone: '1234567890',
-                password: '1234567',
+                password: 'Pass123',
             });
             expect(result.success).toBe(false);
             if (!result.success) {
@@ -85,7 +85,7 @@ describe('registerSchema', () => {
             const result = registerSchema.safeParse({
                 email: 'user@example.com',
                 phone: '1234567890',
-                password: 'password123',
+                password: 'Password123',
             });
             expect(result.success).toBe(true);
         });
@@ -94,7 +94,7 @@ describe('registerSchema', () => {
             const result = registerSchema.safeParse({
                 email: 'user@example.com',
                 phone: '1234567890',
-                password: 'password123',
+                password: 'Password123',
                 fullName: 'John Doe',
             });
             expect(result.success).toBe(true);
@@ -104,7 +104,7 @@ describe('registerSchema', () => {
             const result = registerSchema.safeParse({
                 email: 'user@example.com',
                 phone: '1234567890',
-                password: 'password123',
+                password: 'Password123',
                 fullName: 'J',
             });
             expect(result.success).toBe(false);
@@ -118,8 +118,8 @@ describe('registerFormSchema', () => {
             const result = registerFormSchema.safeParse({
                 email: 'user@example.com',
                 phone: '1234567890',
-                password: 'password123',
-                confirmPassword: 'password123',
+                password: 'Password123',
+                confirmPassword: 'Password123',
             });
             expect(result.success).toBe(true);
         });
@@ -128,8 +128,8 @@ describe('registerFormSchema', () => {
             const result = registerFormSchema.safeParse({
                 email: 'user@example.com',
                 phone: '1234567890',
-                password: 'password123',
-                confirmPassword: 'different123',
+                password: 'Password123',
+                confirmPassword: 'Different123',
             });
             expect(result.success).toBe(false);
             if (!result.success) {

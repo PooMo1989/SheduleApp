@@ -7,6 +7,23 @@ vi.mock('next/navigation', () => ({
     usePathname: () => '/admin/dashboard',
 }));
 
+// Mock tRPC client
+vi.mock('@/lib/trpc/client', () => ({
+    trpc: {
+        dashboard: {
+            getStats: {
+                useQuery: () => ({
+                    data: {
+                        pendingApprovals: 0,
+                        upcomingAppointments: 0,
+                        monthBookings: 0,
+                    },
+                }),
+            },
+        },
+    },
+}));
+
 describe('AdminSidebar', () => {
     describe('Navigation Items', () => {
         it('renders core navigation items for admin role', () => {

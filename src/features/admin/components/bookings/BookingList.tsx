@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { Loader2, AlertCircle, Calendar, Filter } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 /**
  * Booking List Component
@@ -14,7 +15,11 @@ import Link from 'next/link';
 export function BookingList() {
     const [statusFilter, setStatusFilter] = useState<'pending' | 'confirmed' | 'cancelled' | 'all'>('all');
     const [page, setPage] = useState(0);
+    const [rejectingBookingId, setRejectingBookingId] = useState<string | null>(null);
+    const [rejectionReason, setRejectionReason] = useState('');
     const LIMIT = 10;
+
+    const utils = trpc.useUtils();
 
     // Fetch bookings
     const { data, isLoading, isError, error } = trpc.booking.getAll.useQuery({
@@ -26,6 +31,31 @@ export function BookingList() {
     const bookings = data?.bookings || [];
     const total = data?.total || 0;
     const totalPages = Math.ceil(total / LIMIT);
+
+    // Mutations for approve/reject (Epic 4, Stories 4.3 & 4.4)
+    const approveBooking = trpc.booking.approveBooking.useMutation({
+        onSuccess: () => {
+            toast.success('Booking approved');
+            utils.booking.getAll.invalidate();
+            utils.dashboard.getStats.invalidate();
+        },
+        onError: (error) => {
+            toast.error(error.message);
+        },
+    });
+
+    const rejectBooking = trpc.booking.rejectBooking.useMutation({
+        onSuccess: () => {
+            toast.success('Booking rejected');
+            setRejectingBookingId(null);
+            setRejectionReason('');
+            utils.booking.getAll.invalidate();
+            utils.dashboard.getStats.invalidate();
+        },
+        onError: (error) => {
+            toast.error(error.message);
+        },
+    });
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -123,12 +153,30 @@ export function BookingList() {
                                         {booking.providers?.name || 'Unassigned'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <Link
-                                            href={`/admin/bookings/${booking.id}`}
-                                            className="text-teal-600 hover:text-teal-900"
-                                        >
-                                            View
-                                        </Link>
+                                        {booking.status === 'pending' ? (
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    onClick={() => approveBooking.mutate({ bookingId: booking.id })}
+                                                    disabled={approveBooking.isPending}
+                                                    className="px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 disabled:opacity-50"
+                                                >
+                                                    Approve
+                                                </button>
+                                                <button
+                                                    onClick={() => setRejectingBookingId(booking.id)}
+                                                    className="px-3 py-1.5 bg-red-600 text-white text-sm font-medium rounded hover:bg-red-700"
+                                                >
+                                                    Reject
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <Link
+                                                href={`/admin/bookings/${booking.id}`}
+                                                className="text-teal-600 hover:text-teal-900"
+                                            >
+                                                View
+                                            </Link>
+                                        )}
                                     </td>
                                 </tr>
                             ))}
@@ -170,6 +218,49 @@ export function BookingList() {
                     >
                         Next
                     </button>
+                </div>
+            )}
+
+            {/* Rejection Modal (Epic 4, Story 4.4) */}
+            {rejectingBookingId && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+                        <h3 className="text-lg font-semibold text-slate-900 mb-4">Reject Booking</h3>
+                        <p className="text-sm text-slate-600 mb-4">
+                            Please provide a reason for rejecting this booking. The client will receive this message.
+                        </p>
+                        <textarea
+                            value={rejectionReason}
+                            onChange={(e) => setRejectionReason(e.target.value)}
+                            placeholder="e.g., Provider unavailable at this time"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 min-h-[100px]"
+                        />
+                        <div className="flex gap-3 mt-4">
+                            <button
+                                onClick={() => {
+                                    setRejectingBookingId(null);
+                                    setRejectionReason('');
+                                }}
+                                className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (rejectionReason.trim()) {
+                                        rejectBooking.mutate({
+                                            bookingId: rejectingBookingId,
+                                            reason: rejectionReason.trim(),
+                                        });
+                                    }
+                                }}
+                                disabled={!rejectionReason.trim() || rejectBooking.isPending}
+                                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                            >
+                                {rejectBooking.isPending ? 'Rejecting...' : 'Confirm Rejection'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
