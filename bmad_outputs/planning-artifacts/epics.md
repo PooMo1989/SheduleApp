@@ -263,12 +263,18 @@ This document provides the complete epic and story breakdown for sheduleApp, dec
 
 ---
 
-### Epic 4: Pay Later Approval Workflow
+### Epic 4: Pay Later Approval Workflow ✅ COMPLETE (2026-01-29)
 **Goal:** Admins can approve or reject pending Pay Later bookings.
 
 **User Outcome:** Clients who prefer not to pay online can still book; Admins maintain control.
 
 **Covers:** FR28-FR32
+
+**Implementation Status:** ✅ Complete
+- Database: Approval tracking columns, email templates
+- Backend: approveBooking, rejectBooking, admin notifications
+- Frontend: Sidebar badge, stats cards, approve/reject UI, rejection modal
+- Tests: All 116 tests passing
 
 ---
 
@@ -1706,9 +1712,11 @@ So that **business-side accounts are secure** (FR55).
 ---
 
 
-## Epic 4: Pay Later Approval Workflow
+## Epic 4: Pay Later Approval Workflow ✅ COMPLETE (2026-01-29)
 
-### Story 4.1: Pay Later Booking Status Schema
+### Story 4.1: Pay Later Booking Status Schema ✅
+
+**Implementation Status:** ✅ Complete (Migration 031)
 
 As a **developer**,
 I want **booking status tracking in the database**,
@@ -1723,9 +1731,16 @@ So that **Pay Later bookings can be managed through approval workflow**.
 **And** `bookings` table has `approved_at` and `approved_by` columns
 **And** default status for Pay Later bookings is PENDING
 
+**Implementation:**
+- Migration: `supabase/migrations/031_booking_approval_tracking.sql`
+- Added: `approved_at`, `approved_by`, `rejection_reason` columns
+- Indexes for efficient approval queries
+
 ---
 
-### Story 4.2: Admin Pending Bookings List
+### Story 4.2: Admin Pending Bookings List ✅
+
+**Implementation Status:** ✅ Complete
 
 As an **admin**,
 I want **to see all pending Pay Later bookings**,
@@ -1744,9 +1759,16 @@ So that **I can review and take action on them** (FR29).
 **When** I view the page
 **Then** I see "No pending bookings" message
 
+**Implementation:**
+- Frontend: `src/app/admin/bookings/page.tsx` - Stats cards UI
+- Frontend: `src/features/admin/components/AdminSidebar.tsx` - Bookings menu with badge
+- Frontend: `src/features/admin/components/bookings/BookingList.tsx` - Enhanced list view
+
 ---
 
-### Story 4.3: Admin Approve Booking
+### Story 4.3: Admin Approve Booking ✅
+
+**Implementation Status:** ✅ Complete
 
 As an **admin**,
 I want **to approve a pending booking with one click**,
@@ -1768,9 +1790,16 @@ So that **the client receives confirmation and calendar sync occurs** (FR30, FR3
 **When** the approval is processed
 **Then** the booking is removed from pending list
 
+**Implementation:**
+- Backend: `src/server/routers/booking.ts` - `approveBooking` mutation
+- Frontend: `src/features/admin/components/bookings/BookingList.tsx` - Approve button UI
+- Email notifications to client and provider on approval
+
 ---
 
-### Story 4.4: Admin Reject Booking
+### Story 4.4: Admin Reject Booking ✅
+
+**Implementation Status:** ✅ Complete
 
 As an **admin**,
 I want **to reject a pending booking with a reason**,
@@ -1794,9 +1823,17 @@ So that **the client is informed why their booking was declined** (FR31).
 **When** I click confirm
 **Then** I see validation error "Reason is required"
 
+**Implementation:**
+- Backend: `src/server/routers/booking.ts` - `rejectBooking` mutation
+- Frontend: `src/features/admin/components/bookings/BookingList.tsx` - Reject button + modal
+- Validation for rejection reason (min 1 char, max 1000)
+- Rejection email with reason sent to client
+
 ---
 
-### Story 4.5: Admin Notification for New Pending Bookings
+### Story 4.5: Admin Notification for New Pending Bookings ✅
+
+**Implementation Status:** ✅ Complete
 
 As an **admin**,
 I want **to be notified when new Pay Later bookings arrive**,
@@ -1812,6 +1849,12 @@ So that **I can review them promptly** (FR28).
 **Given** I am on the admin dashboard
 **When** new pending bookings exist
 **Then** I see a badge/count indicator on the Pending Approvals menu item
+
+**Implementation:**
+- Migration: `supabase/migrations/032_admin_notification_template.sql`
+- Backend: `src/server/routers/booking.ts` - Admin notification in `create` mutation
+- Frontend: `src/features/admin/components/AdminSidebar.tsx` - Badge count display
+- Email template: `admin_notification` event type
 
 ---
 
