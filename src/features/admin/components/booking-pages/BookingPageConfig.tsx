@@ -28,7 +28,7 @@ export function BookingPageConfig() {
     const providerList = providers?.map(p => ({
         id: p.id,
         name: p.name,
-        serviceIds: p.services?.map((s: any) => s.service.id) || []
+        serviceIds: p.services?.map((s: { service: { id: string } }) => s.service.id) || []
     })) || [];
 
     // Get tenant slug for URLs

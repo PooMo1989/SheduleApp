@@ -2,7 +2,6 @@ import { api } from "@/lib/trpc/api";
 import { BookingManagementUI } from "@/components/booking/BookingManagementUI";
 import { RequestNewLinkForm } from "@/components/booking/RequestNewLinkForm";
 import { AlertCircle } from "lucide-react";
-import Link from "next/link";
 
 interface PageProps {
     searchParams: Promise<{

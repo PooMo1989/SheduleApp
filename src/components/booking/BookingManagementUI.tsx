@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { format } from "date-fns";
-import { Calendar, Clock, MapPin, User, CheckCircle, XCircle, AlertCircle, Loader2 } from "lucide-react";
+import { Calendar, Clock, CheckCircle, XCircle, AlertCircle, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -31,7 +31,7 @@ const passwordSchema = z.object({
 
 type PasswordFormData = z.infer<typeof passwordSchema>;
 
-export function BookingManagementUI({ initialData, token }: BookingManagementUIProps) {
+export function BookingManagementUI({ initialData, token: _token }: BookingManagementUIProps) {
     const router = useRouter();
     const [showAccountForm, setShowAccountForm] = useState(false);
     const [isUpgrading, setIsUpgrading] = useState(false);

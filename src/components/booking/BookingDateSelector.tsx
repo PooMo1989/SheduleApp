@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { format, addDays, startOfToday } from "date-fns";
+import { useState } from "react";
+import { format, startOfToday } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { trpc } from "@/lib/trpc/client";
 import { useRouter } from "next/navigation";
@@ -20,9 +20,9 @@ export function BookingDateSelector({
     serviceId,
     tenantId,
     slug,
-    durationMinutes,
-    price,
-    currency
+    durationMinutes: _durationMinutes,
+    price: _price,
+    currency: _currency
 }: BookingDateSelectorProps) {
     const router = useRouter();
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(startOfToday());
