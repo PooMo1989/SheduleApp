@@ -1489,7 +1489,7 @@ So that **I can book without leaving the business's website**.
 
 ---
 
-### Story 3.2: Widget Configurator UI
+### Story 3.2: Widget Configurator UI ✅ DONE
 
 As an **admin**,
 I want **to configure and preview embed widgets**,
