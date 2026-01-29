@@ -16,14 +16,14 @@ interface ServiceFormData {
     category_id: string;
     service_type: 'consultation' | 'class';
     duration_minutes: number;
-    buffer_before: number;
-    buffer_after: number;
+    buffer_before_minutes: number;
+    buffer_after_minutes: number;
     pricing_type: 'free' | 'fixed' | 'variable' | 'starting_from';
     price: number;
     currency: string;
     location_type: 'in_person' | 'virtual' | 'both';
     virtual_meeting_url: string;
-    max_attendees: number;
+    max_capacity: number;
     min_notice_hours: number;
     max_future_days: number;
     cancellation_hours: number;
@@ -85,14 +85,14 @@ export function ServicePortal({ serviceId }: ServicePortalProps) {
             category_id: '',
             service_type: 'consultation',
             duration_minutes: 60,
-            buffer_before: 0,
-            buffer_after: 0,
+            buffer_before_minutes: 0,
+            buffer_after_minutes: 0,
             pricing_type: 'fixed',
             price: 0,
             currency: settings?.currency || 'LKR',
             location_type: 'in_person',
             virtual_meeting_url: '',
-            max_attendees: 1,
+            max_capacity: 1,
             min_notice_hours: 24,
             max_future_days: 60,
             cancellation_hours: 24,
@@ -118,14 +118,14 @@ export function ServicePortal({ serviceId }: ServicePortalProps) {
                 category_id: existingService.category_id || '',
                 service_type: existingService.service_type as 'consultation' | 'class',
                 duration_minutes: existingService.duration_minutes,
-                buffer_before: existingService.buffer_before ?? 0,
-                buffer_after: existingService.buffer_after ?? 0,
+                buffer_before_minutes: existingService.buffer_before_minutes ?? 0,
+                buffer_after_minutes: existingService.buffer_after_minutes ?? 0,
                 pricing_type: (existingService.pricing_type as ServiceFormData['pricing_type']) || 'fixed',
                 price: Number(existingService.price) || 0,
                 currency: settings?.currency || 'LKR',
                 location_type: (existingService.location_type as ServiceFormData['location_type']) || 'in_person',
                 virtual_meeting_url: existingService.virtual_meeting_url || '',
-                max_attendees: existingService.max_attendees ?? 1,
+                max_capacity: existingService.max_capacity ?? 1,
                 min_notice_hours: existingService.min_notice_hours ?? 24,
                 max_future_days: existingService.max_future_days ?? 60,
                 cancellation_hours: existingService.cancellation_hours ?? 24,
@@ -150,13 +150,13 @@ export function ServicePortal({ serviceId }: ServicePortalProps) {
             category_id: data.category_id || null,
             service_type: data.service_type,
             duration_minutes: data.duration_minutes,
-            buffer_before: data.buffer_before,
-            buffer_after: data.buffer_after,
+            buffer_before_minutes: data.buffer_before_minutes,
+            buffer_after_minutes: data.buffer_after_minutes,
             pricing_type: data.pricing_type,
             price: data.pricing_type === 'free' ? 0 : data.price,
             location_type: data.location_type,
             virtual_meeting_url: data.virtual_meeting_url || null,
-            max_attendees: data.service_type === 'class' ? data.max_attendees : 1,
+            max_capacity: data.service_type === 'class' ? data.max_capacity : 1,
             min_notice_hours: data.min_notice_hours,
             max_future_days: data.max_future_days,
             cancellation_hours: data.cancellation_hours,

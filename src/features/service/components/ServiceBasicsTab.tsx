@@ -9,14 +9,14 @@ interface ServiceFormData {
     category_id: string;
     service_type: 'consultation' | 'class';
     duration_minutes: number;
-    buffer_before: number;
-    buffer_after: number;
+    buffer_before_minutes: number;
+    buffer_after_minutes: number;
     pricing_type: 'free' | 'fixed' | 'variable' | 'starting_from';
     price: number;
     currency: string;
     location_type: 'in_person' | 'virtual' | 'both';
     virtual_meeting_url: string;
-    max_attendees: number;
+    max_capacity: number;
     min_notice_hours: number;
     max_future_days: number;
     cancellation_hours: number;
@@ -150,7 +150,7 @@ export function ServiceBasicsTab() {
                         <input
                             id="buffer_before"
                             type="number"
-                            {...register('buffer_before', { valueAsNumber: true, min: 0 })}
+                            {...register('buffer_before_minutes', { valueAsNumber: true, min: 0 })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                         />
                     </div>
@@ -162,7 +162,7 @@ export function ServiceBasicsTab() {
                         <input
                             id="buffer_after"
                             type="number"
-                            {...register('buffer_after', { valueAsNumber: true, min: 0 })}
+                            {...register('buffer_after_minutes', { valueAsNumber: true, min: 0 })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                         />
                     </div>
@@ -265,7 +265,7 @@ export function ServiceBasicsTab() {
                         <input
                             id="max_attendees"
                             type="number"
-                            {...register('max_attendees', { valueAsNumber: true, min: 1 })}
+                            {...register('max_capacity', { valueAsNumber: true, min: 1 })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 max-w-xs"
                         />
                     </div>
