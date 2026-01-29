@@ -11,8 +11,9 @@ export function BookingPageConfig() {
     // Fetch real data to populate dropdowns
     const { data: services, isLoading: isLoadingServices } = trpc.service.getAll.useQuery();
     const { data: providers, isLoading: isLoadingProviders } = trpc.provider.getAll.useQuery();
+    const { data: settings, isLoading: isLoadingSettings } = trpc.admin.getSettings.useQuery();
 
-    if (isLoadingServices || isLoadingProviders) {
+    if (isLoadingServices || isLoadingProviders || isLoadingSettings) {
         return (
             <div className="flex items-center justify-center p-12">
                 <Loader2 className="h-8 w-8 animate-spin text-slate-300" />
@@ -23,14 +24,15 @@ export function BookingPageConfig() {
     // Map data for generators
     const serviceList = services?.map(s => ({ id: s.id, name: s.name })) || [];
 
-    // For providers, we'd ideally want to know their assigned services to filter correctly.
-    // Assuming provider.list returns basic info. If we need assignments, we might need a dedicated query later.
-    // For now, MVP: List all providers.
+    // Extract service IDs from provider's services relationship
     const providerList = providers?.map(p => ({
         id: p.id,
         name: p.name,
-        serviceIds: [] // Placeholder until we fetch assignments or include them in list query
+        serviceIds: p.services?.map((s: any) => s.service.id) || []
     })) || [];
+
+    // Get tenant slug for URLs
+    const tenantSlug = settings?.slug || 'demo';
 
     return (
         <div className="space-y-6">
@@ -56,7 +58,7 @@ export function BookingPageConfig() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <EmbedGenerator services={serviceList} providers={providerList} />
+                            <EmbedGenerator services={serviceList} providers={providerList} tenantSlug={tenantSlug} />
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -70,7 +72,7 @@ export function BookingPageConfig() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <LinkGenerator services={serviceList} providers={providerList} />
+                            <LinkGenerator services={serviceList} providers={providerList} tenantSlug={tenantSlug} />
                         </CardContent>
                     </Card>
                 </TabsContent>

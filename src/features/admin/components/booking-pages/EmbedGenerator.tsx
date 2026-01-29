@@ -10,9 +10,10 @@ import { Copy, Code } from 'lucide-react';
 interface EmbedGeneratorProps {
     services: { id: string; name: string }[];
     providers: { id: string; name: string; serviceIds: string[] }[];
+    tenantSlug: string;
 }
 
-export function EmbedGenerator({ services, providers }: EmbedGeneratorProps) {
+export function EmbedGenerator({ services, providers, tenantSlug }: EmbedGeneratorProps) {
     const [selectedService, setSelectedService] = useState<string>('all');
     const [selectedProvider, setSelectedProvider] = useState<string>('all');
     const [theme, setTheme] = useState<'light' | 'dark' | 'minimal'>('light');
@@ -26,12 +27,9 @@ export function EmbedGenerator({ services, providers }: EmbedGeneratorProps) {
         if (selectedProvider !== 'all') params.append('provider', selectedProvider);
         if (theme !== 'light') params.append('theme', theme);
 
-        // In real app, we'd append tenant ID from context
-        // params.append('tenant', tenantId);
-
-        const url = `${baseUrl}/book?${params.toString()}`;
+        const url = `${baseUrl}/book/${tenantSlug}${params.toString() ? `?${params.toString()}` : ''}`;
         return `<iframe src="${url}" width="100%" height="600px" frameborder="0" style="border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);"></iframe>`;
-    }, [selectedService, selectedProvider, theme]);
+    }, [selectedService, selectedProvider, theme, tenantSlug]);
 
     const handleCopy = () => {
         navigator.clipboard.writeText(embedCode);
@@ -124,17 +122,23 @@ export function EmbedGenerator({ services, providers }: EmbedGeneratorProps) {
                     <Code className="h-5 w-5 text-indigo-600" />
                     <h4 className="font-medium">Live Preview</h4>
                 </div>
-                {/* Embed Preview - using the actual iframe code but safely rendered */}
                 <div
-                    className="w-full border rounded-xl overflow-hidden bg-slate-50 flex items-center justify-center"
-                    style={{ height: '400px' }}
+                    className="w-full border rounded-xl overflow-hidden bg-slate-50"
+                    style={{ height: '600px' }}
                 >
-                    <div className="text-center text-neutral-400">
-                        <p className="mb-2 font-medium">Widget Preview</p>
-                        <p className="text-sm">Public booking page will appear here</p>
-                    </div>
-                    {/* Note: We refrain from rendering the actual iframe here to avoid self-referential loop 
-                        until the public page exists and handles framing correctly */}
+                    <iframe
+                        src={`${typeof window !== 'undefined' ? window.location.origin : ''}/book/${tenantSlug}${(() => {
+                            const params = new URLSearchParams();
+                            if (selectedService !== 'all') params.append('service', selectedService);
+                            if (selectedProvider !== 'all') params.append('provider', selectedProvider);
+                            if (theme !== 'light') params.append('theme', theme);
+                            return params.toString() ? `?${params.toString()}` : '';
+                        })()}`}
+                        width="100%"
+                        height="100%"
+                        style={{ border: 'none' }}
+                        title="Widget Preview"
+                    />
                 </div>
             </div>
         </div>

@@ -11,9 +11,10 @@ import { Copy, ExternalLink, Link as LinkIcon } from 'lucide-react';
 interface LinkGeneratorProps {
     services: { id: string; name: string }[];
     providers: { id: string; name: string; serviceIds: string[] }[];
+    tenantSlug: string;
 }
 
-export function LinkGenerator({ services, providers }: LinkGeneratorProps) {
+export function LinkGenerator({ services, providers, tenantSlug }: LinkGeneratorProps) {
     const [selectedService, setSelectedService] = useState<string>('all');
     const [selectedProvider, setSelectedProvider] = useState<string>('all');
 
@@ -24,10 +25,8 @@ export function LinkGenerator({ services, providers }: LinkGeneratorProps) {
         if (selectedService !== 'all') params.append('service', selectedService);
         if (selectedProvider !== 'all') params.append('provider', selectedProvider);
 
-        // params.append('tenant', tenantId);
-
-        return `${baseUrl}/book?${params.toString()}`;
-    }, [selectedService, selectedProvider]);
+        return `${baseUrl}/book/${tenantSlug}${params.toString() ? `?${params.toString()}` : ''}`;
+    }, [selectedService, selectedProvider, tenantSlug]);
 
     const handleCopy = () => {
         navigator.clipboard.writeText(generatedLink);
