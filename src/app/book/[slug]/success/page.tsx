@@ -34,6 +34,10 @@ export default function BookingSuccessPage() {
         { enabled: !!bookingId }
     );
 
+    // Get session to check if user is logged in
+    const { data: session } = trpc.auth.getSession.useQuery();
+    const isLoggedIn = !!session?.user;
+
     // Account upgrade mutation (to be implemented)
     const upgradeAccount = trpc.auth.upgradeGuestAccount.useMutation({
         onSuccess: () => {
@@ -228,14 +232,33 @@ export default function BookingSuccessPage() {
                 )}
 
                 {/* Actions */}
-                <div className="p-8 md:p-12 text-center space-y-3">
+                <div className="p-8 md:p-12 space-y-3">
+                    {/* View My Bookings button - only for logged-in users */}
+                    {isLoggedIn && (
+                        <Link
+                            href="/my-bookings"
+                            className="block w-full py-2.5 px-4 bg-white border-2 border-indigo-600 text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-colors text-center"
+                        >
+                            View My Bookings
+                        </Link>
+                    )}
+
+                    {/* Book Another Appointment button */}
                     {slug && (
                         <Link
                             href={`/book/${slug}`}
-                            className="block w-full py-2.5 px-4 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
+                            className="block w-full py-2.5 px-4 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors text-center"
                         >
                             Book Another Appointment
                         </Link>
+                    )}
+
+                    {/* Magic link info - only for guests who skipped account creation */}
+                    {!isLoggedIn && !showAccountCreation && (
+                        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800 text-left">
+                            <p className="font-medium mb-1">Check Your Email</p>
+                            <p>We&apos;ve sent you a magic link to manage this booking. Click the link in your email to view, reschedule, or cancel your appointment.</p>
+                        </div>
                     )}
                 </div>
             </div>
