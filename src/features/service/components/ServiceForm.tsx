@@ -125,7 +125,7 @@ export function ServiceForm({ service, onClose, onSuccess }: ServiceFormProps) {
                         </label>
                         <input
                             {...register('name', { required: 'Name is required' })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                             placeholder="e.g., Initial Consultation"
                         />
                         {errors.name && (
@@ -141,7 +141,7 @@ export function ServiceForm({ service, onClose, onSuccess }: ServiceFormProps) {
                         <textarea
                             {...register('description')}
                             rows={2}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                             placeholder="Brief description of the service"
                         />
                     </div>
@@ -159,7 +159,7 @@ export function ServiceForm({ service, onClose, onSuccess }: ServiceFormProps) {
                                     min: { value: 5, message: 'Min 5 minutes' },
                                     valueAsNumber: true,
                                 })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                             />
                             {errors.duration_minutes && (
                                 <p className="mt-1 text-sm text-red-600">{errors.duration_minutes.message}</p>
@@ -178,7 +178,7 @@ export function ServiceForm({ service, onClose, onSuccess }: ServiceFormProps) {
                                     min: { value: 0, message: 'Cannot be negative' },
                                     valueAsNumber: true,
                                 })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                             />
                             {errors.price && (
                                 <p className="mt-1 text-sm text-red-600">{errors.price.message}</p>
@@ -194,7 +194,7 @@ export function ServiceForm({ service, onClose, onSuccess }: ServiceFormProps) {
                             </label>
                             <select
                                 {...register('service_type')}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                             >
                                 <option value="consultation">Consultation (1:1)</option>
                                 <option value="class">Group Class</option>
@@ -207,7 +207,7 @@ export function ServiceForm({ service, onClose, onSuccess }: ServiceFormProps) {
                             </label>
                             <select
                                 {...register('category_id')}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                             >
                                 <option value="">No category</option>
                                 {categories?.map(cat => (

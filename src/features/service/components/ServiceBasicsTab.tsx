@@ -62,7 +62,7 @@ export function ServiceBasicsTab() {
                             id="name"
                             type="text"
                             {...register('name', { required: 'Name is required' })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                             placeholder="e.g., Initial Consultation"
                         />
                         {errors.name && (
@@ -79,7 +79,7 @@ export function ServiceBasicsTab() {
                             <select
                                 id="category_id"
                                 {...register('category_id')}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                             >
                                 <option value="">No category</option>
                                 {categories?.map(cat => (
@@ -95,7 +95,7 @@ export function ServiceBasicsTab() {
                             <select
                                 id="service_type"
                                 {...register('service_type')}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                             >
                                 <option value="consultation">Consultation (1:1)</option>
                                 <option value="class">Group Class</option>
@@ -112,7 +112,7 @@ export function ServiceBasicsTab() {
                             id="description"
                             {...register('description')}
                             rows={3}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                             placeholder="Describe what this service includes..."
                         />
                     </div>
@@ -136,7 +136,7 @@ export function ServiceBasicsTab() {
                                 min: { value: 5, message: 'Min 5' },
                                 valueAsNumber: true,
                             })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                         />
                         {errors.duration_minutes && (
                             <p className="mt-1 text-sm text-red-600">{errors.duration_minutes.message}</p>
@@ -151,7 +151,7 @@ export function ServiceBasicsTab() {
                             id="buffer_before"
                             type="number"
                             {...register('buffer_before', { valueAsNumber: true, min: 0 })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                         />
                     </div>
 
@@ -163,7 +163,7 @@ export function ServiceBasicsTab() {
                             id="buffer_after"
                             type="number"
                             {...register('buffer_after', { valueAsNumber: true, min: 0 })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                         />
                     </div>
                 </div>
@@ -181,7 +181,7 @@ export function ServiceBasicsTab() {
                         <select
                             id="pricing_type"
                             {...register('pricing_type')}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                         >
                             <option value="fixed">Fixed Price</option>
                             <option value="free">Free</option>
@@ -203,7 +203,7 @@ export function ServiceBasicsTab() {
                                     valueAsNumber: true,
                                     min: { value: 0, message: 'Cannot be negative' },
                                 })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                             />
                             {errors.price && (
                                 <p className="mt-1 text-sm text-red-600">{errors.price.message}</p>
@@ -225,7 +225,7 @@ export function ServiceBasicsTab() {
                         <select
                             id="location_type"
                             {...register('location_type')}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                         >
                             <option value="in_person">In-Person</option>
                             <option value="virtual">Virtual</option>
@@ -242,7 +242,7 @@ export function ServiceBasicsTab() {
                                 id="virtual_meeting_url"
                                 type="url"
                                 {...register('virtual_meeting_url')}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                                 placeholder="https://zoom.us/j/..."
                             />
                             <p className="mt-1 text-xs text-gray-500">
@@ -266,7 +266,7 @@ export function ServiceBasicsTab() {
                             id="max_attendees"
                             type="number"
                             {...register('max_attendees', { valueAsNumber: true, min: 1 })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 max-w-xs"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 max-w-xs"
                         />
                     </div>
                 </section>
@@ -286,7 +286,7 @@ export function ServiceBasicsTab() {
                                 id="min_notice_hours"
                                 type="number"
                                 {...register('min_notice_hours', { valueAsNumber: true, min: 0 })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                             />
                             <p className="mt-1 text-xs text-gray-500">How far in advance clients must book</p>
                         </div>
@@ -299,7 +299,7 @@ export function ServiceBasicsTab() {
                                 id="max_future_days"
                                 type="number"
                                 {...register('max_future_days', { valueAsNumber: true, min: 1 })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                             />
                             <p className="mt-1 text-xs text-gray-500">How far into the future clients can book</p>
                         </div>
@@ -313,7 +313,7 @@ export function ServiceBasicsTab() {
                             id="cancellation_hours"
                             type="number"
                             {...register('cancellation_hours', { valueAsNumber: true, min: 0 })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 max-w-xs"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 max-w-xs"
                         />
                         <p className="mt-1 text-xs text-gray-500">Clients must cancel at least this many hours before</p>
                     </div>
@@ -380,7 +380,7 @@ export function ServiceBasicsTab() {
                             <select
                                 id="pay_later_mode"
                                 {...register('pay_later_mode')}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 max-w-xs"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 max-w-xs"
                             >
                                 <option value="">Use company default ({settings?.pay_later_mode === 'auto_confirm' ? 'Auto-confirm' : 'Pending Approval'})</option>
                                 <option value="auto_confirm">Auto-confirm bookings</option>

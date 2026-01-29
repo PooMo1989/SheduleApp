@@ -63,7 +63,7 @@ export function RequestNewLinkForm() {
                     {...form.register("email")}
                     type="email"
                     id="email"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                     placeholder="your@email.com"
                 />
                 {form.formState.errors.email && (

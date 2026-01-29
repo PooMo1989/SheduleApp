@@ -185,7 +185,7 @@ export default function BookingSuccessPage() {
                                     {...form.register("password")}
                                     type="password"
                                     id="password"
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
                                     placeholder="At least 8 characters"
                                 />
                                 {form.formState.errors.password && (
@@ -202,7 +202,7 @@ export default function BookingSuccessPage() {
                                     {...form.register("confirmPassword")}
                                     type="password"
                                     id="confirmPassword"
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
                                     placeholder="Re-enter your password"
                                 />
                                 {form.formState.errors.confirmPassword && (

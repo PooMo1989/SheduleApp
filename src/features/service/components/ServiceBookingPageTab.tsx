@@ -149,7 +149,7 @@ export function ServiceBookingPageTab({ serviceId }: ServiceBookingPageTabProps)
                             id="confirmation_message"
                             {...register('confirmation_message')}
                             rows={3}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                             placeholder="Thank you for booking! We look forward to seeing you."
                         />
                         <p className="mt-1 text-xs text-gray-500">
@@ -165,7 +165,7 @@ export function ServiceBookingPageTab({ serviceId }: ServiceBookingPageTabProps)
                             id="redirect_url"
                             type="url"
                             {...register('redirect_url')}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                             placeholder="https://your-website.com/thank-you"
                         />
                         <p className="mt-1 text-xs text-gray-500">

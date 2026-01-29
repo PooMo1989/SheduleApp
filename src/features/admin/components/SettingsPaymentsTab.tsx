@@ -108,7 +108,7 @@ export function SettingsPaymentsTab() {
                                     type="text"
                                     {...register('bank_name')}
                                     placeholder="e.g., Bank of Ceylon"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                                 />
                             </div>
 
@@ -121,7 +121,7 @@ export function SettingsPaymentsTab() {
                                     type="text"
                                     {...register('bank_branch')}
                                     placeholder="e.g., Colombo 7"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                                 />
                             </div>
                         </div>
@@ -135,7 +135,7 @@ export function SettingsPaymentsTab() {
                                 type="text"
                                 {...register('bank_account_holder')}
                                 placeholder="e.g., Wellness Center Pvt Ltd"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                             />
                         </div>
 
@@ -148,7 +148,7 @@ export function SettingsPaymentsTab() {
                                 type="text"
                                 {...register('bank_account_number')}
                                 placeholder="e.g., 001234567890"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                             />
                         </div>
                     </div>

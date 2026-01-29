@@ -142,7 +142,7 @@ export function BookingManagementUI({ initialData, token: _token }: BookingManag
                                     type="email"
                                     value={initialData.email}
                                     disabled
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50 text-slate-500 text-sm"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 bg-slate-50 text-slate-500 text-sm"
                                 />
                             </div>
                             <div>
@@ -152,7 +152,7 @@ export function BookingManagementUI({ initialData, token: _token }: BookingManag
                                 <input
                                     {...form.register("password")}
                                     type="password"
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                                     placeholder="Min. 8 characters"
                                 />
                                 {form.formState.errors.password && (
@@ -166,7 +166,7 @@ export function BookingManagementUI({ initialData, token: _token }: BookingManag
                                 <input
                                     {...form.register("confirmPassword")}
                                     type="password"
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                                 />
                                 {form.formState.errors.confirmPassword && (
                                     <p className="mt-1 text-xs text-red-500">{form.formState.errors.confirmPassword.message}</p>

@@ -160,7 +160,7 @@ function TeamMemberDetailsTabInner({ member }: TeamMemberDetailsTabProps) {
                         type="tel"
                         {...register('phone')}
                         placeholder="+1 (555) 123-4567"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                     />
                 </div>
 
@@ -174,7 +174,7 @@ function TeamMemberDetailsTabInner({ member }: TeamMemberDetailsTabProps) {
                         type="text"
                         {...register('position')}
                         placeholder="e.g. Senior Stylist, Manager"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                     />
                 </div>
 

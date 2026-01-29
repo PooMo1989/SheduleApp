@@ -107,7 +107,7 @@ export function CompanyProfileForm() {
                         </label>
                         <input
                             {...register('name', { required: 'Company name is required' })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                             placeholder="Your Company Name"
                         />
                         {errors.name && (
@@ -153,7 +153,7 @@ export function CompanyProfileForm() {
                         </label>
                         <select
                             {...register('timezone')}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                         >
                             <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
                             <option value="Asia/Colombo">Asia/Colombo (SLT)</option>
@@ -169,7 +169,7 @@ export function CompanyProfileForm() {
                         </label>
                         <select
                             {...register('currency')}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                         >
                             <option value="LKR">LKR - Sri Lankan Rupee</option>
                             <option value="INR">INR - Indian Rupee</option>
@@ -185,7 +185,7 @@ export function CompanyProfileForm() {
                         </label>
                         <select
                             {...register('business_category')}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                         >
                             <option value="">Select a category...</option>
                             <option value="wellness">Wellness & Spa</option>
@@ -204,7 +204,7 @@ export function CompanyProfileForm() {
                         </label>
                         <select
                             {...register('slot_interval_minutes', { valueAsNumber: true })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                         >
                             <option value={5}>5 minutes</option>
                             <option value={10}>10 minutes</option>

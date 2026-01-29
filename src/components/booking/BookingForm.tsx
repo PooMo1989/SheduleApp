@@ -147,7 +147,7 @@ export function BookingForm({
                     {...form.register("name")}
                     type="text"
                     id="name"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
                     placeholder="Jane Doe"
                 />
                 {form.formState.errors.name && (
@@ -164,7 +164,7 @@ export function BookingForm({
                     {...form.register("email")}
                     type="email"
                     id="email"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
                     placeholder="jane@example.com"
                     onBlur={(e) => handleEmailCheck(e.target.value)}
                 />
@@ -225,7 +225,7 @@ export function BookingForm({
                     {...form.register("phone")}
                     type="tel"
                     id="phone"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
                     placeholder="+1 (555) 000-0000"
                 />
             </div>
@@ -239,7 +239,7 @@ export function BookingForm({
                     {...form.register("notes")}
                     id="notes"
                     rows={3}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm resize-none"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm resize-none"
                     placeholder="Anything else we should know?"
                 />
                 {form.formState.errors.notes && (

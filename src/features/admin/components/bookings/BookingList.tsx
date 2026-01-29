@@ -233,7 +233,7 @@ export function BookingList() {
                             value={rejectionReason}
                             onChange={(e) => setRejectionReason(e.target.value)}
                             placeholder="e.g., Provider unavailable at this time"
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 min-h-[100px]"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500 min-h-[100px]"
                         />
                         <div className="flex gap-3 mt-4">
                             <button
