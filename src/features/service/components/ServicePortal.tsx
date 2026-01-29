@@ -196,30 +196,70 @@ export function ServicePortal({ serviceId }: ServicePortalProps) {
         );
     }
 
+    // Determine which tabs are accessible
+    const isCreatingNew = !isEditing && !savedServiceId;
+    const canAccessOtherTabs = isEditing || savedServiceId;
+
     const tabs = [
         {
             id: 'basics',
             label: 'Basics & Settings',
             content: <ServiceBasicsTab />,
+            enabled: true,
         },
         {
             id: 'schedule',
             label: 'Schedule & Providers',
-            content: <ServiceScheduleTab serviceId={savedServiceId} />,
+            content: canAccessOtherTabs ? <ServiceScheduleTab serviceId={savedServiceId} /> : (
+                <div className="p-8 text-center text-gray-500">
+                    <p className="text-lg font-medium mb-2">Create the service first</p>
+                    <p className="text-sm">Save the basics tab to continue with schedule and providers.</p>
+                </div>
+            ),
+            enabled: canAccessOtherTabs,
         },
         {
             id: 'booking-page',
             label: 'Booking Page',
-            content: <ServiceBookingPageTab serviceId={savedServiceId} />,
+            content: canAccessOtherTabs ? <ServiceBookingPageTab serviceId={savedServiceId} /> : (
+                <div className="p-8 text-center text-gray-500">
+                    <p className="text-lg font-medium mb-2">Create the service first</p>
+                    <p className="text-sm">Save the basics tab to continue with booking page settings.</p>
+                </div>
+            ),
+            enabled: canAccessOtherTabs,
         },
     ];
 
+    // Determine button text based on context
+    const getSaveButtonText = () => {
+        if (isPending) return 'Saving...';
+        if (isEditing) return 'Save Changes';
+        if (savedServiceId) return 'Save Changes';
+        if (activeTab === 'basics') return 'Save & Continue';
+        return 'Save';
+    };
+
+    const handleSaveAndContinue = async (e: React.FormEvent) => {
+        e.preventDefault();
+        await methods.handleSubmit(onSubmit)(e);
+
+        // After successful save, move to next tab if creating new
+        if (!isEditing && activeTab === 'basics' && !methods.formState.errors.name) {
+            setTimeout(() => {
+                if (savedServiceId || createService.isSuccess) {
+                    setActiveTab('schedule');
+                }
+            }, 500);
+        }
+    };
+
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 flex flex-col">
             <FormProvider {...methods}>
-                <form onSubmit={methods.handleSubmit(onSubmit)}>
+                <form onSubmit={handleSaveAndContinue} className="flex flex-col flex-1">
                     {/* Header */}
-                    <div className="bg-white border-b sticky top-0 z-10">
+                    <div className="bg-white border-b">
                         <div className="max-w-6xl mx-auto px-4 py-4">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
@@ -237,27 +277,24 @@ export function ServicePortal({ serviceId }: ServicePortalProps) {
                                             {isEditing ? 'Edit Service' : 'Create Service'}
                                         </h1>
                                         {savedServiceId && !isEditing && (
-                                            <p className="text-sm text-green-600">Service created - continue configuring</p>
+                                            <p className="text-sm text-green-600">✓ Service created - configure schedule and booking page</p>
                                         )}
                                     </div>
                                 </div>
-
-                                <div className="flex items-center gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={handleCancel}
-                                        className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={isPending}
-                                        className="px-6 py-2 bg-teal-600 text-white font-medium rounded-lg hover:bg-teal-700 disabled:opacity-50 transition-colors"
-                                    >
-                                        {isPending ? 'Saving...' : isEditing || savedServiceId ? 'Save Changes' : 'Create Service'}
-                                    </button>
-                                </div>
+                                {/* Progress indicator for new services */}
+                                {!isEditing && (
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <span className={`px-3 py-1 rounded-full ${activeTab === 'basics' ? 'bg-teal-100 text-teal-700 font-medium' : 'bg-gray-100 text-gray-600'}`}>
+                                            1. Basics
+                                        </span>
+                                        <span className={`px-3 py-1 rounded-full ${activeTab === 'schedule' ? 'bg-teal-100 text-teal-700 font-medium' : savedServiceId ? 'bg-gray-100 text-gray-600' : 'bg-gray-50 text-gray-400'}`}>
+                                            2. Schedule
+                                        </span>
+                                        <span className={`px-3 py-1 rounded-full ${activeTab === 'booking-page' ? 'bg-teal-100 text-teal-700 font-medium' : savedServiceId ? 'bg-gray-100 text-gray-600' : 'bg-gray-50 text-gray-400'}`}>
+                                            3. Booking
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -271,26 +308,57 @@ export function ServicePortal({ serviceId }: ServicePortalProps) {
                         </div>
                     )}
 
-                    {/* Success Message */}
-                    {(createService.isSuccess || updateService.isSuccess) && (
-                        <div className="max-w-6xl mx-auto px-4 pt-4">
-                            <div className="bg-green-50 border border-green-200 text-green-700 p-4 rounded-lg flex items-center gap-2">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                                Service saved successfully
-                            </div>
-                        </div>
-                    )}
-
                     {/* Tabbed Content */}
-                    <div className="max-w-6xl mx-auto px-4 py-6">
-                        <div className="bg-white rounded-lg border border-gray-200 min-h-[600px]">
+                    <div className="flex-1 max-w-6xl mx-auto px-4 py-6 w-full">
+                        <div className="bg-white rounded-lg border border-gray-200 min-h-[500px]">
                             <HorizontalTabs
                                 tabs={tabs}
                                 defaultTab={activeTab}
-                                onChange={setActiveTab}
+                                onChange={(tabId) => {
+                                    // Prevent navigation to locked tabs
+                                    const tab = tabs.find(t => t.id === tabId);
+                                    if (tab?.enabled) {
+                                        setActiveTab(tabId);
+                                    }
+                                }}
                             />
+                        </div>
+                    </div>
+
+                    {/* Sticky Footer with Save Button */}
+                    <div className="bg-white border-t sticky bottom-0">
+                        <div className="max-w-6xl mx-auto px-4 py-4">
+                            <div className="flex items-center justify-between">
+                                <button
+                                    type="button"
+                                    onClick={handleCancel}
+                                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <div className="flex items-center gap-3">
+                                    {(createService.isSuccess || updateService.isSuccess) && (
+                                        <div className="flex items-center gap-2 text-green-600 text-sm font-medium">
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Saved successfully
+                                        </div>
+                                    )}
+                                    <button
+                                        type="submit"
+                                        disabled={isPending || (!canAccessOtherTabs && activeTab !== 'basics')}
+                                        className="px-6 py-2.5 bg-teal-600 text-white font-medium rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                                    >
+                                        {getSaveButtonText()}
+                                        {!isEditing && activeTab === 'basics' && !savedServiceId && (
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </form>
