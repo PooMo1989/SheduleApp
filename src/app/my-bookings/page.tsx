@@ -6,8 +6,8 @@ import { Calendar, Clock, User, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function MyBookingsPage() {
-    const { data: bookings, isLoading } = trpc.booking.getMyBookings.useQuery({
-        status: 'all' // Show all bookings
+    const { data, isLoading } = trpc.booking.getMyBookings.useQuery({
+        // No status filter = show all bookings
     });
 
     if (isLoading) {
@@ -18,12 +18,14 @@ export default function MyBookingsPage() {
         );
     }
 
+    const bookings = data?.bookings || [];
+
     return (
         <div className="min-h-screen bg-slate-50 py-12 px-4">
             <div className="max-w-4xl mx-auto">
                 <h1 className="text-3xl font-bold text-slate-900 mb-8">My Bookings</h1>
 
-                {bookings && bookings.length === 0 ? (
+                {bookings.length === 0 ? (
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
                         <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-4" />
                         <h2 className="text-xl font-semibold text-slate-900 mb-2">No bookings yet</h2>
@@ -37,7 +39,7 @@ export default function MyBookingsPage() {
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        {bookings?.map((booking) => (
+                        {bookings.map((booking) => (
                             <div
                                 key={booking.id}
                                 className="bg-white rounded-xl shadow-sm border border-slate-200 p-6"
