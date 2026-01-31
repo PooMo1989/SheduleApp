@@ -163,12 +163,17 @@ export async function checkSlot(
     // Fetch service config
     const { data: service, error: serviceError } = await supabase
         .from('services')
-        .select('id, duration_minutes, buffer_before_minutes, buffer_after_minutes')
+        .select('id, duration_minutes, buffer_before_minutes, buffer_after_minutes, is_active')
         .eq('id', request.serviceId)
         .single();
 
     if (serviceError || !service) {
         return { available: false, reason: 'Service not found' };
+    }
+
+    // Validate service is active
+    if (!service.is_active) {
+        return { available: false, reason: 'This service is no longer available' };
     }
 
     const slotEnd = new Date(slotStart.getTime() + service.duration_minutes * 60 * 1000);
@@ -328,6 +333,11 @@ async function resolveContext(
 
     if (serviceError || !service) {
         throw new Error('Service not found');
+    }
+
+    // Validate service is active
+    if (!service.is_active) {
+        throw new Error('This service is no longer available');
     }
 
     // Fetch tenant config

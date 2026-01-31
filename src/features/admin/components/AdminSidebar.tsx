@@ -164,51 +164,51 @@ export function AdminSidebar({
     return (
         <aside
             className={`
-                bg-neutral-900 text-white h-full flex flex-col transition-all duration-300
+                bg-neutral-900 text-white h-screen flex flex-col transition-all duration-300
                 ${collapsed ? 'w-16' : 'w-64'}
             `}
             aria-label="Admin sidebar"
         >
             {/* Logo/Brand */}
-            <div className="p-4 border-b border-neutral-800 flex items-center justify-between">
+            <div className="p-4 border-b border-neutral-800 flex items-center justify-between flex-shrink-0">
                 {!collapsed && (
                     <span className="text-lg font-bold text-primary-400">
                         {companyName || 'sheduleApp'}
                     </span>
                 )}
                 {collapsed && (
-                    <span className="text-lg font-bold text-primary-400 mx-auto">S</span>
+                    <span className="text-lg font-bold text-primary-400">S</span>
+                )}
+                {/* Collapse Toggle Button */}
+                {onToggle && (
+                    <button
+                        onClick={onToggle}
+                        className="p-1.5 hover:bg-neutral-800 rounded transition-colors"
+                        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                        title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                    >
+                        {collapsed ? (
+                            <ChevronRight className="w-4 h-4" />
+                        ) : (
+                            <ChevronLeft className="w-4 h-4" />
+                        )}
+                    </button>
                 )}
             </div>
 
             {/* Main Navigation */}
-            <nav className="flex-1 py-4 overflow-y-auto" aria-label="Admin navigation">
+            <nav className="flex-1 py-4 overflow-y-auto min-h-0" aria-label="Admin navigation">
                 <ul className="space-y-1 px-2">
                     {visibleMainNav.map(renderNavItem)}
                 </ul>
             </nav>
 
-            {/* Bottom Navigation (Profile) */}
-            <div className="border-t border-neutral-800 py-2">
+            {/* Bottom Navigation (Profile) - Sticky to viewport bottom */}
+            <div className="border-t border-neutral-800 py-2 flex-shrink-0">
                 <ul className="space-y-1 px-2">
                     {visibleBottomNav.map(renderNavItem)}
                 </ul>
             </div>
-
-            {/* Collapse Toggle */}
-            {onToggle && (
-                <button
-                    onClick={onToggle}
-                    className="p-4 border-t border-neutral-800 flex items-center justify-center hover:bg-neutral-800 transition-colors"
-                    aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                >
-                    {collapsed ? (
-                        <ChevronRight className="w-5 h-5" />
-                    ) : (
-                        <ChevronLeft className="w-5 h-5" />
-                    )}
-                </button>
-            )}
         </aside>
     );
 }

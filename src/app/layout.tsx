@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { TRPCProvider } from "@/lib/trpc/client";
 import { InactivityHandler } from "@/components/common/InactivityHandler";
+import { Toaster } from "sonner";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -26,6 +27,7 @@ export default function RootLayout({
         <TRPCProvider>
           <InactivityHandler />
           {children}
+          <Toaster richColors position="top-right" />
         </TRPCProvider>
       </body>
     </html>

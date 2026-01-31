@@ -48,6 +48,7 @@ const createServiceSchema = serviceBasicsSchema.merge(serviceBookingPageSchema);
 // Update schema (partial)
 const updateServiceSchema = createServiceSchema.partial().extend({
     id: z.string().uuid(),
+    is_active: z.boolean().optional(),
 });
 
 // Service schedule schema (Tab 2)
@@ -69,16 +70,28 @@ const serviceScheduleSchema = z.object({
 export const serviceRouter = router({
     /**
      * Get all services for the tenant
+     * Admin sees all services, public only sees active
      */
-    getAll: protectedProcedure.query(async ({ ctx }) => {
-        const { data, error } = await ctx.supabase
-            .from('services')
-            .select(`
-                *,
-                category:categories(id, name, slug)
-            `)
-            .eq('is_active', true)
-            .order('name', { ascending: true });
+    getAll: protectedProcedure
+        .input(z.object({
+            includeInactive: z.boolean().optional().default(false),
+        }).optional())
+        .query(async ({ ctx, input }) => {
+            let query = ctx.supabase
+                .from('services')
+                .select(`
+                    *,
+                    category:categories(id, name, slug)
+                `);
+
+            // For admin views, include inactive services
+            // For public views, only show active
+            if (!input?.includeInactive) {
+                query = query.eq('is_active', true);
+            }
+
+            // Sort by creation date (newest first) - will be replaced by drag-and-drop order later
+            const { data, error } = await query.order('created_at', { ascending: false });
 
         if (error) {
             throw new TRPCError({
@@ -199,6 +212,24 @@ export const serviceRouter = router({
         }),
 
     /**
+     * Set service active/inactive (admin only)
+     */
+    setActive: adminProcedure
+        .input(z.object({
+            id: z.string().uuid(),
+            is_active: z.boolean(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            // Direct SQL update via RPC
+            const { error } = await (ctx.supabase as any).from('services')
+                .update({ is_active: input.is_active })
+                .eq('id', input.id);
+
+            if (error) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message });
+            return { success: true };
+        }),
+
+    /**
      * Update a service (admin only)
      */
     update: adminProcedure
@@ -213,8 +244,9 @@ export const serviceRouter = router({
                     updated_at: new Date().toISOString(),
                 })
                 .eq('id', id)
+                .eq('tenant_id', ctx.tenantId)
                 .select()
-                .single();
+                .maybeSingle();
 
             if (error) {
                 if (error.code === '23505' && error.message.includes('custom_slug')) {
@@ -226,7 +258,13 @@ export const serviceRouter = router({
                 throw new TRPCError({
                     code: 'INTERNAL_SERVER_ERROR',
                     message: 'Failed to update service',
-                    cause: error,
+                });
+            }
+
+            if (!data) {
+                throw new TRPCError({
+                    code: 'NOT_FOUND',
+                    message: 'Service not found',
                 });
             }
 
@@ -234,21 +272,35 @@ export const serviceRouter = router({
         }),
 
     /**
-     * Delete a service (admin only) - soft delete
+     * Delete a service (admin only) - hard delete
+     * Note: CASCADE will remove related schedules, providers, etc.
      */
     delete: adminProcedure
         .input(z.object({ id: z.string().uuid() }))
         .mutation(async ({ ctx, input }) => {
-            const { error } = await ctx.supabase
+            // Use .select() to return the deleted row(s) so we can verify deletion
+            const { data, error } = await ctx.supabase
                 .from('services')
-                .update({ is_active: false, updated_at: new Date().toISOString() })
-                .eq('id', input.id);
+                .delete()
+                .eq('id', input.id)
+                .eq('tenant_id', ctx.tenantId)
+                .select('id');
 
             if (error) {
+                console.error('Service delete error:', error);
                 throw new TRPCError({
                     code: 'INTERNAL_SERVER_ERROR',
                     message: 'Failed to delete service',
                     cause: error,
+                });
+            }
+
+            // Check if any rows were actually deleted
+            if (!data || data.length === 0) {
+                console.error('Service delete: No rows deleted. RLS policy may be blocking or service not found.');
+                throw new TRPCError({
+                    code: 'NOT_FOUND',
+                    message: 'Service not found or you do not have permission to delete it',
                 });
             }
 
@@ -499,6 +551,91 @@ export const categoryRouter = router({
             }
 
             return { success: true, category: data };
+        }),
+
+    /**
+     * Update a category (admin only)
+     */
+    update: adminProcedure
+        .input(z.object({
+            id: z.string().uuid(),
+            name: z.string().min(1).max(50),
+            slug: z.string().min(1).max(50).regex(/^[a-z0-9-]+$/),
+            description: z.string().max(200).nullable().optional(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            const { id, ...updateData } = input;
+
+            const { data, error } = await ctx.supabase
+                .from('categories')
+                .update({
+                    ...updateData,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('id', id)
+                .eq('tenant_id', ctx.tenantId)
+                .select()
+                .single();
+
+            if (error) {
+                if (error.code === '23505') {
+                    throw new TRPCError({
+                        code: 'CONFLICT',
+                        message: 'A category with this slug already exists',
+                    });
+                }
+                throw new TRPCError({
+                    code: 'INTERNAL_SERVER_ERROR',
+                    message: 'Failed to update category',
+                    cause: error,
+                });
+            }
+
+            if (!data) {
+                throw new TRPCError({
+                    code: 'NOT_FOUND',
+                    message: 'Category not found',
+                });
+            }
+
+            return { success: true, category: data };
+        }),
+
+    /**
+     * Delete a category (admin only)
+     */
+    delete: adminProcedure
+        .input(z.object({ id: z.string().uuid() }))
+        .mutation(async ({ ctx, input }) => {
+            // First, unset category_id on any services using this category
+            await ctx.supabase
+                .from('services')
+                .update({ category_id: null })
+                .eq('category_id', input.id);
+
+            const { data, error } = await ctx.supabase
+                .from('categories')
+                .delete()
+                .eq('id', input.id)
+                .eq('tenant_id', ctx.tenantId)
+                .select('id');
+
+            if (error) {
+                throw new TRPCError({
+                    code: 'INTERNAL_SERVER_ERROR',
+                    message: 'Failed to delete category',
+                    cause: error,
+                });
+            }
+
+            if (!data || data.length === 0) {
+                throw new TRPCError({
+                    code: 'NOT_FOUND',
+                    message: 'Category not found',
+                });
+            }
+
+            return { success: true };
         }),
 });
 

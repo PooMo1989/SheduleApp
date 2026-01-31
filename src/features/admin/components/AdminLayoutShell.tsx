@@ -29,7 +29,7 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
     const userName = profile?.name || profile?.email || '';
 
     return (
-        <div className="min-h-screen bg-neutral-50 flex">
+        <div className="h-screen bg-neutral-50 flex overflow-hidden">
             {/* Desktop Sidebar */}
             <div className="hidden md:flex">
                 <AdminSidebar
@@ -56,9 +56,9 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
             )}
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col min-w-0">
+            <div className="flex-1 flex flex-col min-w-0 h-full">
                 {/* Top Header */}
-                <header className="bg-white border-b border-neutral-200 px-4 py-3 flex items-center justify-between">
+                <header className="bg-white border-b border-neutral-200 px-4 py-3 flex items-center justify-between flex-shrink-0">
                     {/* Mobile Menu Button */}
                     <button
                         className="md:hidden p-2 rounded-lg hover:bg-neutral-100"
@@ -94,7 +94,7 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
                 </header>
 
                 {/* Page Content */}
-                <main className="flex-1 p-4 md:p-6 overflow-auto">
+                <main className="flex-1 p-4 md:p-6 overflow-y-auto min-h-0">
                     {children}
                 </main>
             </div>

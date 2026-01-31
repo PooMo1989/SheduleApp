@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormProvider, useForm } from 'react-hook-form';
 import { trpc } from '@/lib/trpc/client';
-import { HorizontalTabs } from '@/components/common';
+import { toast } from 'sonner';
 import { ServiceBasicsTab } from './ServiceBasicsTab';
-import { ServiceScheduleTab } from './ServiceScheduleTab';
+import { ServiceScheduleTab, ServiceScheduleTabRef } from './ServiceScheduleTab';
 import { ServiceBookingPageTab } from './ServiceBookingPageTab';
 
 interface ServiceFormData {
@@ -41,40 +41,46 @@ interface ServiceFormData {
 }
 
 interface ServicePortalProps {
-    serviceId?: string;
+    serviceId: string;
 }
 
 /**
- * Service Portal Component
+ * Service Portal Component (Edit Mode Only)
  * Story 2.3.1: Service Setup Tabbed Portal
- * Full-page 3-tab experience for creating/editing services
+ * Full-page 3-tab experience for editing existing services
+ * Unified save button for all tabs
  */
 export function ServicePortal({ serviceId }: ServicePortalProps) {
     const router = useRouter();
-    const isEditing = !!serviceId;
-    const [activeTab, setActiveTab] = useState('basics');
-    const [savedServiceId, setSavedServiceId] = useState<string | null>(serviceId || null);
+    const [activeTab, setActiveTab] = useState<'basics' | 'schedule' | 'booking'>('basics');
+    const [formDirty, setFormDirty] = useState(false);
+    const [scheduleTabDirty, setScheduleTabDirty] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [savedFormValues, setSavedFormValues] = useState<ServiceFormData | null>(null);
 
-    const { data: existingService, isLoading } = trpc.service.getById.useQuery(
-        { id: serviceId! },
-        { enabled: isEditing }
+    // Ref for schedule tab to trigger save
+    const scheduleTabRef = useRef<ServiceScheduleTabRef>(null);
+
+    // Combined dirty state
+    const hasUnsavedChanges = formDirty || scheduleTabDirty;
+
+    const { data: existingService, isLoading, error } = trpc.service.getById.useQuery(
+        { id: serviceId },
+        { enabled: !!serviceId }
     );
 
     const { data: settings } = trpc.admin.getSettings.useQuery();
 
     const utils = trpc.useUtils();
 
-    const createService = trpc.service.create.useMutation({
-        onSuccess: (result) => {
-            setSavedServiceId(result.service.id);
-            utils.service.getAll.invalidate();
-        },
-    });
-
     const updateService = trpc.service.update.useMutation({
         onSuccess: () => {
+            setSavedFormValues(methods.getValues());
             utils.service.getAll.invalidate();
             utils.service.getById.invalidate({ id: serviceId });
+        },
+        onError: (err) => {
+            toast.error(err.message || 'Failed to save changes');
         },
     });
 
@@ -109,10 +115,21 @@ export function ServicePortal({ serviceId }: ServicePortalProps) {
         },
     });
 
+    // Track form changes
+    useEffect(() => {
+        const subscription = methods.watch((formValues) => {
+            if (savedFormValues) {
+                const hasChanges = JSON.stringify(formValues) !== JSON.stringify(savedFormValues);
+                setFormDirty(hasChanges);
+            }
+        });
+        return () => subscription.unsubscribe();
+    }, [methods, savedFormValues]);
+
     // Load existing service data
     useEffect(() => {
         if (existingService) {
-            methods.reset({
+            const values: ServiceFormData = {
                 name: existingService.name,
                 description: existingService.description || '',
                 category_id: existingService.category_id || '',
@@ -139,229 +156,246 @@ export function ServicePortal({ serviceId }: ServicePortalProps) {
                 require_account: existingService.require_account ?? false,
                 confirmation_message: existingService.confirmation_message || '',
                 redirect_url: existingService.redirect_url || '',
-            });
+            };
+            methods.reset(values);
+            setSavedFormValues(values);
+            setFormDirty(false);
         }
     }, [existingService, methods, settings?.currency]);
 
-    const onSubmit = async (data: ServiceFormData) => {
-        const payload = {
-            name: data.name,
-            description: data.description || null,
-            category_id: data.category_id || null,
-            service_type: data.service_type,
-            duration_minutes: data.duration_minutes,
-            buffer_before_minutes: data.buffer_before_minutes,
-            buffer_after_minutes: data.buffer_after_minutes,
-            pricing_type: data.pricing_type,
-            price: data.pricing_type === 'free' ? 0 : data.price,
-            location_type: data.location_type,
-            virtual_meeting_url: data.virtual_meeting_url || null,
-            max_capacity: data.service_type === 'class' ? data.max_capacity : 1,
-            min_notice_hours: data.min_notice_hours,
-            max_future_days: data.max_future_days,
-            cancellation_hours: data.cancellation_hours,
-            auto_confirm: data.auto_confirm,
-            visibility: data.visibility,
-            pay_later_enabled: data.pay_later_enabled || null,
-            pay_later_mode: data.pay_later_mode || null,
-            custom_url_slug: data.custom_url_slug || null,
-            show_price: data.show_price,
-            show_duration: data.show_duration,
-            require_account: data.require_account,
-            confirmation_message: data.confirmation_message || null,
-            redirect_url: data.redirect_url || null,
-        };
+    // Unified save handler
+    const handleSave = useCallback(async () => {
+        // Check for schedule validation errors
+        if (scheduleTabRef.current?.hasErrors()) {
+            toast.error('Please fix schedule validation errors before saving');
+            setActiveTab('schedule');
+            return;
+        }
 
-        if (isEditing || savedServiceId) {
-            await updateService.mutateAsync({ id: savedServiceId || serviceId!, ...payload });
+        setIsSaving(true);
+
+        try {
+            const data = methods.getValues();
+            const payload = {
+                name: data.name,
+                description: data.description || null,
+                category_id: data.category_id || null,
+                service_type: data.service_type,
+                duration_minutes: data.duration_minutes,
+                buffer_before_minutes: data.buffer_before_minutes,
+                buffer_after_minutes: data.buffer_after_minutes,
+                pricing_type: data.pricing_type,
+                price: data.pricing_type === 'free' ? 0 : data.price,
+                location_type: data.location_type,
+                virtual_meeting_url: data.virtual_meeting_url || null,
+                max_capacity: data.service_type === 'class' ? data.max_capacity : 1,
+                min_notice_hours: data.min_notice_hours,
+                max_future_days: data.max_future_days,
+                cancellation_hours: data.cancellation_hours,
+                auto_confirm: data.auto_confirm,
+                visibility: data.visibility,
+                pay_later_enabled: data.pay_later_enabled || null,
+                pay_later_mode: data.pay_later_mode || null,
+                custom_url_slug: data.custom_url_slug || null,
+                show_price: data.show_price,
+                show_duration: data.show_duration,
+                require_account: data.require_account,
+                confirmation_message: data.confirmation_message || null,
+                redirect_url: data.redirect_url || null,
+            };
+
+            // Save form data
+            await updateService.mutateAsync({ id: serviceId, ...payload });
+
+            // Save schedule tab data
+            if (scheduleTabRef.current) {
+                await scheduleTabRef.current.save();
+            }
+
+            // Mark as saved
+            setFormDirty(false);
+            setScheduleTabDirty(false);
+            toast.success('Changes saved');
+        } catch (error) {
+            // Error already handled by mutation onError
+        } finally {
+            setIsSaving(false);
+        }
+    }, [serviceId, updateService, methods]);
+
+    const handleBack = () => {
+        if (hasUnsavedChanges) {
+            if (confirm('You have unsaved changes. Are you sure you want to leave?')) {
+                router.push('/admin/services');
+            }
         } else {
-            await createService.mutateAsync(payload);
+            router.push('/admin/services');
         }
     };
 
-    const handleCancel = () => {
-        router.push('/admin/services');
-    };
-
-    const isPending = createService.isPending || updateService.isPending;
-    const error = createService.error || updateService.error;
-
-    if (isEditing && isLoading) {
+    if (isLoading) {
         return (
             <div className="min-h-screen bg-gray-50 p-8">
                 <div className="max-w-4xl mx-auto">
-                    <div className="animate-pulse bg-gray-100 h-96 rounded-lg" />
+                    <div className="animate-pulse space-y-4">
+                        <div className="h-8 bg-gray-200 rounded w-1/3" />
+                        <div className="h-4 bg-gray-200 rounded w-1/4" />
+                        <div className="h-96 bg-gray-100 rounded-lg" />
+                    </div>
                 </div>
             </div>
         );
     }
 
-    // Determine which tabs are accessible
-    const isCreatingNew = !isEditing && !savedServiceId;
-    const canAccessOtherTabs = isEditing || savedServiceId;
+    if (error || !existingService) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-center">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-2">Service not found</h2>
+                    <p className="text-gray-500 mb-4">The service you&apos;re looking for doesn&apos;t exist.</p>
+                    <button
+                        onClick={() => router.push('/admin/services')}
+                        className="text-teal-600 hover:text-teal-700 font-medium"
+                    >
+                        Back to Services
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     const tabs = [
-        {
-            id: 'basics',
-            label: 'Basics & Settings',
-            content: <ServiceBasicsTab />,
-            enabled: true,
-        },
-        {
-            id: 'schedule',
-            label: 'Schedule & Providers',
-            content: canAccessOtherTabs ? <ServiceScheduleTab serviceId={savedServiceId} /> : (
-                <div className="p-8 text-center text-gray-500">
-                    <p className="text-lg font-medium mb-2">Create the service first</p>
-                    <p className="text-sm">Save the basics tab to continue with schedule and providers.</p>
-                </div>
-            ),
-            enabled: canAccessOtherTabs,
-        },
-        {
-            id: 'booking-page',
-            label: 'Booking Page',
-            content: canAccessOtherTabs ? <ServiceBookingPageTab serviceId={savedServiceId} /> : (
-                <div className="p-8 text-center text-gray-500">
-                    <p className="text-lg font-medium mb-2">Create the service first</p>
-                    <p className="text-sm">Save the basics tab to continue with booking page settings.</p>
-                </div>
-            ),
-            enabled: canAccessOtherTabs,
-        },
+        { id: 'basics' as const, label: 'Basics & Settings' },
+        { id: 'schedule' as const, label: 'Schedule & Providers' },
+        { id: 'booking' as const, label: 'Booking Page' },
     ];
-
-    // Determine button text based on context
-    const getSaveButtonText = () => {
-        if (isPending) return 'Saving...';
-        if (isEditing) return 'Save Changes';
-        if (savedServiceId) return 'Save Changes';
-        if (activeTab === 'basics') return 'Save & Continue';
-        return 'Save';
-    };
-
-    const handleSaveAndContinue = async (e: React.FormEvent) => {
-        e.preventDefault();
-        await methods.handleSubmit(onSubmit)(e);
-
-        // After successful save, move to next tab if creating new
-        if (!isEditing && activeTab === 'basics' && !methods.formState.errors.name) {
-            setTimeout(() => {
-                if (savedServiceId || createService.isSuccess) {
-                    setActiveTab('schedule');
-                }
-            }, 500);
-        }
-    };
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col">
             <FormProvider {...methods}>
-                <form onSubmit={handleSaveAndContinue} className="flex flex-col flex-1">
-                    {/* Header */}
-                    <div className="bg-white border-b">
-                        <div className="max-w-6xl mx-auto px-4 py-4">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                    <button
-                                        type="button"
-                                        onClick={handleCancel}
-                                        className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                                    >
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                                        </svg>
-                                    </button>
-                                    <div>
-                                        <h1 className="text-xl font-bold text-gray-900">
-                                            {isEditing ? 'Edit Service' : 'Create Service'}
-                                        </h1>
-                                        {savedServiceId && !isEditing && (
-                                            <p className="text-sm text-green-600">✓ Service created - configure schedule and booking page</p>
-                                        )}
-                                    </div>
-                                </div>
-                                {/* Progress indicator for new services */}
-                                {!isEditing && (
-                                    <div className="flex items-center gap-2 text-sm">
-                                        <span className={`px-3 py-1 rounded-full ${activeTab === 'basics' ? 'bg-teal-100 text-teal-700 font-medium' : 'bg-gray-100 text-gray-600'}`}>
-                                            1. Basics
-                                        </span>
-                                        <span className={`px-3 py-1 rounded-full ${activeTab === 'schedule' ? 'bg-teal-100 text-teal-700 font-medium' : savedServiceId ? 'bg-gray-100 text-gray-600' : 'bg-gray-50 text-gray-400'}`}>
-                                            2. Schedule
-                                        </span>
-                                        <span className={`px-3 py-1 rounded-full ${activeTab === 'booking-page' ? 'bg-teal-100 text-teal-700 font-medium' : savedServiceId ? 'bg-gray-100 text-gray-600' : 'bg-gray-50 text-gray-400'}`}>
-                                            3. Booking
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Error Display */}
-                    {error && (
-                        <div className="max-w-6xl mx-auto px-4 pt-4">
-                            <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg">
-                                {error.message}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Tabbed Content */}
-                    <div className="flex-1 max-w-6xl mx-auto px-4 py-6 w-full">
-                        <div className="bg-white rounded-lg border border-gray-200 min-h-[500px]">
-                            <HorizontalTabs
-                                tabs={tabs}
-                                defaultTab={activeTab}
-                                onChange={(tabId) => {
-                                    // Prevent navigation to locked tabs
-                                    const tab = tabs.find(t => t.id === tabId);
-                                    if (tab?.enabled) {
-                                        setActiveTab(tabId);
-                                    }
-                                }}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Sticky Footer with Save Button */}
-                    <div className="bg-white border-t sticky bottom-0">
-                        <div className="max-w-6xl mx-auto px-4 py-4">
-                            <div className="flex items-center justify-between">
+                {/* Header */}
+                <div className="bg-white border-b">
+                    <div className="max-w-6xl mx-auto px-4 py-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
                                 <button
                                     type="button"
-                                    onClick={handleCancel}
-                                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                    onClick={handleBack}
+                                    className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                                 >
-                                    Cancel
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                    </svg>
                                 </button>
-                                <div className="flex items-center gap-3">
-                                    {(createService.isSuccess || updateService.isSuccess) && (
-                                        <div className="flex items-center gap-2 text-green-600 text-sm font-medium">
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                            </svg>
-                                            Saved successfully
-                                        </div>
-                                    )}
-                                    <button
-                                        type="submit"
-                                        disabled={isPending || (!canAccessOtherTabs && activeTab !== 'basics')}
-                                        className="px-6 py-2.5 bg-teal-600 text-white font-medium rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-                                    >
-                                        {getSaveButtonText()}
-                                        {!isEditing && activeTab === 'basics' && !savedServiceId && (
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                            </svg>
-                                        )}
-                                    </button>
+                                <div>
+                                    <h1 className="text-xl font-bold text-gray-900">
+                                        {existingService.name}
+                                    </h1>
+                                    <p className="text-sm text-gray-500">
+                                        Edit service settings
+                                    </p>
                                 </div>
+                            </div>
+                            {hasUnsavedChanges && (
+                                <span className="text-sm text-amber-600 flex items-center gap-1">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    Unsaved changes
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Error Display */}
+                {updateService.error && (
+                    <div className="max-w-6xl mx-auto px-4 pt-4">
+                        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg">
+                            {updateService.error.message}
+                        </div>
+                    </div>
+                )}
+
+                {/* Tabbed Content */}
+                <div className="flex-1 max-w-6xl mx-auto px-4 py-6 w-full">
+                    <div className="bg-white rounded-lg border border-gray-200 min-h-[500px] flex flex-col">
+                        {/* Tab Bar */}
+                        <div className="border-b border-gray-200">
+                            <div className="flex">
+                                {tabs.map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        type="button"
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`
+                                            px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors
+                                            border-b-2 -mb-px
+                                            ${activeTab === tab.id
+                                                ? 'border-teal-600 text-teal-600'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                            }
+                                        `}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Tab Content - All tabs stay mounted */}
+                        <div className="flex-1 overflow-y-auto">
+                            <div className={activeTab === 'basics' ? '' : 'hidden'}>
+                                <ServiceBasicsTab />
+                            </div>
+                            <div className={activeTab === 'schedule' ? '' : 'hidden'}>
+                                <ServiceScheduleTab
+                                    ref={scheduleTabRef}
+                                    serviceId={serviceId}
+                                    onDirtyChange={setScheduleTabDirty}
+                                />
+                            </div>
+                            <div className={activeTab === 'booking' ? '' : 'hidden'}>
+                                <ServiceBookingPageTab serviceId={serviceId} />
                             </div>
                         </div>
                     </div>
-                </form>
+                </div>
+
+                {/* Sticky Footer with Save Button */}
+                <div className="bg-white border-t sticky bottom-0">
+                    <div className="max-w-6xl mx-auto px-4 py-4">
+                        <div className="flex items-center justify-between">
+                            <button
+                                type="button"
+                                onClick={handleBack}
+                                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                            >
+                                Back to Services
+                            </button>
+                            <div className="flex items-center gap-3">
+                                <button
+                                    type="button"
+                                    onClick={handleSave}
+                                    disabled={isSaving || !hasUnsavedChanges}
+                                    className="px-6 py-2.5 bg-teal-600 text-white font-medium rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                                >
+                                    {isSaving ? (
+                                        <>
+                                            <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                            </svg>
+                                            Saving...
+                                        </>
+                                    ) : (
+                                        'Save Changes'
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </FormProvider>
         </div>
     );

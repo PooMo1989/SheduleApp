@@ -6,6 +6,7 @@ export * from './BrandingForm';
 export * from './SettingsPaymentsTab';
 export * from './SettingsNotificationsTab';
 export * from './SettingsPermissionsTab';
+export * from './ServiceCategoriesForm';
 export * from './providers/ProviderList';
 export * from './providers/ProviderDetail';
 export * from './providers/ProviderInviteForm';

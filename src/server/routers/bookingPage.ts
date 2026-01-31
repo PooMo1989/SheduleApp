@@ -66,15 +66,16 @@ export const bookingPageRouter = router({
             const { data: service, error } = await ctx.supabase
                 .from("services")
                 .select(`
-                    id, 
-                    name, 
-                    description, 
-                    duration_minutes, 
-                    price, 
+                    id,
+                    name,
+                    description,
+                    duration_minutes,
+                    price,
                     currency,
                     image_url,
                     pricing_type,
-                    location_type
+                    location_type,
+                    is_active
                 `)
                 .eq("id", input.serviceId)
                 .single();
@@ -85,6 +86,15 @@ export const bookingPageRouter = router({
                     message: "Service not found",
                 });
             }
+
+            // Check if service is active
+            if (!service.is_active) {
+                throw new TRPCError({
+                    code: "NOT_FOUND",
+                    message: "This service is no longer available",
+                });
+            }
+
             return service;
         }),
 

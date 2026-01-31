@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { TimeIntervalPicker } from '@/components/ui/TimeIntervalPicker';
 import { trpc } from '@/lib/trpc/client';
 import { toast } from 'sonner';
 import { Loader2, Plus, Trash2, Copy } from 'lucide-react';
@@ -161,20 +161,22 @@ export function WeeklyScheduleEditor({ baseSchedule, onScheduleChange, providerI
                                 ) : (
                                     slots.map((slot, index) => (
                                         <div key={index} className="flex items-center gap-2">
-                                            <Input
-                                                type="time"
-                                                className="w-32"
+                                            <TimeIntervalPicker
                                                 value={slot.startTime}
-                                                onChange={(e) => updateSlot(day.id, index, 'startTime', e.target.value)}
-                                                onBlur={() => handleSaveDay(day.id, slots)}
+                                                onChange={(value) => {
+                                                    updateSlot(day.id, index, 'startTime', value);
+                                                    // Auto-save after a brief delay
+                                                    setTimeout(() => handleSaveDay(day.id, [...slots.slice(0, index), { ...slots[index], startTime: value }, ...slots.slice(index + 1)]), 100);
+                                                }}
                                             />
                                             <span className="text-neutral-400">-</span>
-                                            <Input
-                                                type="time"
-                                                className="w-32"
+                                            <TimeIntervalPicker
                                                 value={slot.endTime}
-                                                onChange={(e) => updateSlot(day.id, index, 'endTime', e.target.value)}
-                                                onBlur={() => handleSaveDay(day.id, slots)}
+                                                onChange={(value) => {
+                                                    updateSlot(day.id, index, 'endTime', value);
+                                                    // Auto-save after a brief delay
+                                                    setTimeout(() => handleSaveDay(day.id, [...slots.slice(0, index), { ...slots[index], endTime: value }, ...slots.slice(index + 1)]), 100);
+                                                }}
                                             />
                                             <Button
                                                 variant="ghost"
@@ -217,7 +219,7 @@ export function WeeklyScheduleEditor({ baseSchedule, onScheduleChange, providerI
             </div>
 
             {updateMutation.isPending && (
-                <div className="fixed bottom-4 right-4 bg-slate-900 text-white px-4 py-2 rounded-md flex items-center gap-2 shadow-lg animate-in fade-in slide-in-from-bottom-5">
+                <div className="fixed bottom-4 right-4 bg-slate-900 text-white px-4 py-2 rounded-md flex items-center gap-2 shadow-lg animate-in fade-in slide-in-from-bottom-5 cursor-wait">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Saving schedule...
                 </div>

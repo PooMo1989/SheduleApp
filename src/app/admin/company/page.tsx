@@ -6,6 +6,7 @@ import {
     BrandingForm,
     SettingsPaymentsTab,
     SettingsNotificationsTab,
+    ServiceCategoriesForm,
 } from '@/features/admin/components';
 import { HorizontalTabs } from '@/components/common';
 
@@ -14,29 +15,30 @@ import { HorizontalTabs } from '@/components/common';
  * Story 2.8.10: Tenant configuration page
  *
  * Tabs:
- * 1. General Info - CompanyProfileForm + BusinessHoursForm
- * 2. Branding - BrandingForm
- * 3. Payments - Bank details (moved from Settings)
- * 4. Notifications - Templates (moved from Settings)
+ * 1. General - CompanyProfileForm + BusinessHoursForm + BrandingForm
+ * 2. Services - Service categories management
+ * 3. Payments - Bank details
+ * 4. Notifications - Templates
  */
 export default function AdminCompanyPage() {
     const tabs = [
         {
             id: 'general',
-            label: 'General Info',
+            label: 'General',
             content: (
                 <div className="p-6 space-y-8 max-w-4xl">
                     <CompanyProfileForm />
                     <BusinessHoursForm />
+                    <BrandingForm />
                 </div>
             ),
         },
         {
-            id: 'branding',
-            label: 'Branding',
+            id: 'services',
+            label: 'Services',
             content: (
                 <div className="p-6 max-w-4xl">
-                    <BrandingForm />
+                    <ServiceCategoriesForm />
                 </div>
             ),
         },
